@@ -21,7 +21,8 @@ $ontext
 *=== 4 Basic check and export of dummies in model
 *=== 5 General period and proces maps definitions
 *=== 6 Reporting TIMES default model results
-*=== 7 Write reporting to gdx and csv
+*=== 7 Test section (abort if test fails)
+*=== 8 Write reporting to gdx and csv
 $offtext
 
 *============================================================================================
@@ -56,6 +57,7 @@ SET     sector          "Sector labels" /
         RESIDENTIAL     "Residential"
         TRANSPORT       "Transport"
         TRANSMISSION    "Transmission of gas and electricity"
+	"_na"           "Not allocated"
 /;
 
 SET     topic           "Reporting topics from TIMES" /
@@ -172,11 +174,10 @@ $gdxin
 
 $onMulti
 *set unit /set.units/ ;
-set cur    /"_na"/;
-set units  /"_na" , "capacity_unit"/;
+set cur     /"_na"/;
+set units   /"_na" , "capacity_unit"/;
 set all_reg /"_na"/;
 $offMulti
-
 
 
 elapsedTIME("ante","02setTIMESsolution") = TIMEelapsed;
@@ -325,7 +326,7 @@ prcDM('IMPNRGZ') = YES;
 prcDM('IMPMATZ') = YES;
 
 * clean-up previous times dummies file if file exist
-*$call 'del %pathMODEL%TIMESreport\GDX\*_TimesDummies.gdx*'
+*$call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
 
 *Defining timesDummies parameter to extract which dummies are present in model
 timesDummies(regT,vntg,year,prcDM,comT,all_TS) = F_out(regT,vntg,year,prcDM,comT,all_TS);
@@ -335,9 +336,9 @@ timesDummiesFlag(year) = sum((regT,vntg,prcDM,comT,all_TS), timesDummies(regT,vn
 * Creating if-statement that creates a massage for the user - to see that dummies are present, these are also displayed in the lst-file running the current gms-file.
         IF(sum(year, timesDummiesFlag(year)) gt  0,
                 DISPLAY  timesDummiesFlag,timesdummies;
-                execute 'msg "%username%" /time:0 Dummies present in TIMES demo solution. For detailed information see:  %pathMODEL%\Results\TimesDummies_%TIMESscenario%.gdx';
+                execute 'msg "%username%" /time:0 Dummies present in TIMES demo solution. For detailed information see:  %pathTIMESmodel%Results\TimesDummies_%TIMESscenario%.gdx';
 * Write information related to dummies to a gdx-file in the temp-library
-                execute_unload '%pathMODEL%TIMESreport\GDX\%TIMESscenario%_TimesDummies.gdx',
+                execute_unload '%pathTIMESmodel%TIMESreport\GDX\%TIMESscenario%_TimesDummies.gdx',
                 timesDummies;
         );
 
@@ -445,9 +446,11 @@ elapsedTIME("report","ENERGYSYSTEM") = TIMEelapsed;
 *============================================================================================
 * 6.2 Reporting (looping over sectors)
 *============================================================================================
+*processes that are not included in the prc_gmap gets the label "_NA" to make that this data is also included into TIMESreport
+prc_gmap(reg,prc,"_NA")$(not sum((sector,regT), prc_gmap(regT,prc,sector))) = YES;
+
 *Only include sectors that are part of the times solution
 ReportInclude(sector) = 1$sum((prc,reg), prc_gmap(reg,prc,sector));
-display ReportInclude;
 
 
 elapsedTIME("start","06Reporting") = TIMEelapsed;
@@ -480,23 +483,8 @@ LOOP(sector,
 *       Define list of tmp_prc that are part of a trade relationship"
         tmp_prctrd(tmp_prc)  =YES$sum((regFrom,tmp_comNRGin,regTo),top_ire(regFrom,tmp_comNRGin,regTo,tmp_comNRGin,tmp_prc));
 
-
 *display tmp_prc, tmp_comNRGin, tmp_comNRGout, tmp_comEMISout, tmp_comEMISin, tmp_comMATin, tmp_comMATout, tmp_comSrvout;);
 *$exit
-
-*       material         "Material input or output, kton"
-*        emission        "GHG and other emissions"
-*        savings         "Energy savings"
-*        energy          "Final energy demand"
-*        service         "Energy service demand"
-*        dcosts          "Discounted cost"
-*        lumpsum         "Lumpsum investment and subsidies (average annual)"
-*        capacit         "Capacity"
-*        prices          "Prices"
-*       revenue         "Revenue, e.g. from electricity trade"
-*        constraint      "Information on constraints"
-*       inputpar        "Model input parameters"
-*
 
 *       Energy service demand
         TIMESReport(sector,"service","fout",tmp_prc,tmp_comSrvout,all_TS,regT,regT,milestonyr,vntg,units, "_na")
@@ -541,9 +529,9 @@ LOOP(sector,
         com_unit(regT,tmp_comEMISout,units));
 
 *       Emission in
-        TIMESReport(sector,"emission","f_in" ,tmp_prc,tmp_comEMISout,all_TS,regT,regT,milestonyr,vntg,units,"_na")
-        = F_in(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout,all_TS)$(
-        com_unit(regT,tmp_comEMISout,units));
+        TIMESReport(sector,"emission","f_in" ,tmp_prc,tmp_comEMISin,all_TS,regT,regT,milestonyr,vntg,units,"_na")
+        = F_in(regT,vntg,milestonyr,tmp_prc,tmp_comEMISin,all_TS)$(
+        com_unit(regT,tmp_comEMISin,units));
 
 *       Marginal price of energy commodity
         TIMESReport(sector,"prices","mpri","_na",tmp_comNRGin,all_ts,regT,regT,milestonyr,"_na",units,cur)
@@ -620,7 +608,7 @@ LOOP(sector,
         = ((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpinv")+ cap_new(regT,vntg,tmp_prc,milestonyr,"inv+")) / periodlength(milestonyr))$(
             g_rcur(regT,cur));
 
-*       Average annual lumpsum investment subsidy
+*       Average annual lumpsum investment tax 
         TIMESReport(sector,"lumpsum","invx" ,tmp_prc,"_na","annual",regT,regT,milestonyr,vntg,"_na",cur)
         $((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) ge 0)
         = ((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) / periodlength(milestonyr))$(
@@ -654,8 +642,32 @@ countprc("count",sector)     = card(tmp_prc);
 
 elapsedTIME("end","06Reporting") = TIMEelapsed;
 
+
 *============================================================================================
-* 7 Write reporting to gdx and csv
+* 7 Test section: Sum checks to confirm that TIMES report includes all data
+*===========================================================================================
+* Currently this section only compares F_IN form the TIMES gdx file with the TIMESreport parameter
+* Additional test should be included 
+
+PARAMETERS test_f_in_sum(*) "Simple sum checks to confirm that TIMES report includes all data from F_IN"
+	   SumCheck         "Check difference between TIMES gdx and TIMES report "
+           tolerance        "Define tolerance for sum chekcs"                           /1e-7/ ;
+           
+*Sum over data in TIMESgdx
+test_f_in_sum("TIMESgdx")    = sum((all_reg,vntg,milestonyr,prc,com,all_TS),F_in(all_reg,vntg,milestonyr,prc,com,all_TS));
+
+*Sum over data in TIMESreport
+test_f_in_sum("TIMESreport") = sum((sector,topic,prc,com,all_TS,regFrom,RegTo,milestonyr,vntg,units,cur), TIMESReport(sector,topic,"f_in",prc,com,all_TS,regFrom,RegTo,milestonyr,vntg,units,cur));
+
+* Check difference between TIMES gdx and TIMES report "
+SumCheck = ABS(test_f_in_sum("TIMESgdx") - test_f_in_sum("TIMESreport"));
+
+* Abort if test fails
+execute$(SumCheck > tolerance) 'msg "%username%" /time:0 Aborted due to difference between data in TIMES gdx and TIMES report script: & /UIzCheck/' ;
+ABORT$(SumCheck   > tolerance) "Aborted due to difference between data in TIMES gdx and TIMES report script"
+
+*============================================================================================
+* 8 Write reporting to gdx and csv
 *============================================================================================
 
 *Write timesreport gdx-file including set definitions
