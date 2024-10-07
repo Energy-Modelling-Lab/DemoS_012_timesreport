@@ -13,7 +13,7 @@
 $title   TIMES demo12 report - Collects all relevant data from TIMES demo into one parameter
 
 $ontext
-*Overview of code (22/05/2024)
+*Overview of code (07/10/2024)
 *=== 0 Define setglobal if not set externally 
 *=== 1 Define sets and parameter for TIMES reporting
 *=== 2 Declare TIMES default sets, parameters, variables and equations
@@ -22,7 +22,8 @@ $ontext
 *=== 5 General period and proces maps definitions
 *=== 6 Reporting TIMES default model results
 *=== 7 Test section (abort if test fails)
-*=== 8 Write reporting to gdx and csv
+*=== 8 Expanded TIMES reporting 
+*=== 9 Write restults to gdx and csv
 $offtext
 
 *============================================================================================
@@ -57,7 +58,7 @@ SET     sector          "Sector labels" /
         RESIDENTIAL     "Residential"
         TRANSPORT       "Transport"
         TRANSMISSION    "Transmission of gas and electricity"
-	"_na"           "Not allocated"
+        "_na"           "Not assigned"
 /;
 
 SET     topic           "Reporting topics from TIMES" /
@@ -357,6 +358,7 @@ elapsedTIME("ante","04dummiesTIMES") = TIMEelapsed;
 *============================================================================================
 * 5.1 Determine period length of milestone years based on TIMES default solution
 *============================================================================================
+* Note this section could be replaced by simply importing the Parameter D from the gdx file) 
 
 SET pyear               "Define set year used to calculate length of milesone year";
 SET periodlength_       "Define set to help calculate length of milesone year";
@@ -385,6 +387,7 @@ set     topPC(prc,com,in_out)   "Map processes to their commodity input and outp
 
 * map processed based on their commodity input and output
 topPC(prc,com,in_out) = SUM(reg, top(reg,prc,com,in_out));
+
 *comSrv(com)       = YES$SUM((i,tescom)$tescom(com),1$secSrv(i,tescom));
 comSrv(com)       = YES$sum(reg, com_gmap(reg,"DEM",com));
 comNRG(com)       = YES$sum(reg, com_gmap(reg,"NRG",com));
@@ -409,28 +412,29 @@ SET     tmp_prc(prc)            "temporary proces list"
 elapsedTIME("ante","05TIMESreportmaps") = TIMEelapsed;
 
 *============================================================================================
+* 5.4 Extend prc_gmap to also cover prc that have not been assigned a sectors in VEDA
+*============================================================================================
+* Processes (prc) that are not included in the prc_gmap from TIMES gets the label "_NA" (not 
+* assigned)  This is done to make that sure that data had has not been assgined a sector in VEDA
+* is also included in the TIMESreport
+
+prc_gmap(reg,prc,"_NA")$(not sum((sector,regT), prc_gmap(regT,prc,sector))) = YES;
+
+*============================================================================================
 * 6 Reporting TIMES default model results
 *============================================================================================
-
 
 *======Define TIMES default reporting parameter
 *                                               commodity   regionfrom        Vintage info
 *                                                  |          |                        /
-PARAMETER       TIMESReport(sector,topic,attr,prc,com,all_TS,regFrom,RegTo,milestonyr,vntg,units,cur) "TIMES reporting parameter"
+PARAMETER       TIMESReport(sector,topic,attr,prc,com,all_TS,regFrom,RegTo,milestonyr,vntg,units,cur) "TIMES reporting parameter";
 *                                              |                       |
 *                                             proces                regionto
 
-PARAMETER ReportInclude(sector)     "Flag YES if sector is to be included in timesreport";
 
-
-*Default is to include all sectors
-ReportInclude(sector) = yes;
-
-*Alternatively one can choose to exclude all sectors by default for troubleshooting purposes
-ReportInclude(sector) = no;
 
 *============================================================================================
-* 6.1 Reporting (system information)
+* 6.1 Reporting (energy system level)
 *============================================================================================
 *Reporting objective function at regional and obj_items level using information in yearval and g_dyear to set discount year
 TIMESReport("ENERGYSYSTEM","dcosts",var_obj_items,"_na","_na","annual",regT,regT,milestonyr,"_na","_na",cur)$(yearval(milestonyr) = g_dyear) = VAR_OBJ_L(regT,var_obj_items,cur);
@@ -446,12 +450,13 @@ elapsedTIME("report","ENERGYSYSTEM") = TIMEelapsed;
 *============================================================================================
 * 6.2 Reporting (looping over sectors)
 *============================================================================================
-*processes that are not included in the prc_gmap gets the label "_NA" to make that this data is also included into TIMESreport
-prc_gmap(reg,prc,"_NA")$(not sum((sector,regT), prc_gmap(regT,prc,sector))) = YES;
+PARAMETER ReportInclude(sector)     "Flag: YES if sector is to be included in timesreport loop";
 
-*Only include sectors that are part of the times solution
+*Include sectors that are part of the times solution
 ReportInclude(sector) = 1$sum((prc,reg), prc_gmap(reg,prc,sector));
 
+*Toubleshooting: Test reporting script by only  looping over a single sector 
+*ReportInclude(sector) = no; ReportInclude("ELECTRICITY") = yes;
 
 elapsedTIME("start","06Reporting") = TIMEelapsed;
 LOOP(sector,
@@ -644,7 +649,7 @@ elapsedTIME("end","06Reporting") = TIMEelapsed;
 
 
 *============================================================================================
-* 7 Test section: Sum checks to confirm that TIMES report includes all data
+* 7 Test section: Sum check to confirm that TIMES report includes all data
 *===========================================================================================
 * Currently this section only compares F_IN form the TIMES gdx file with the TIMESreport parameter
 * Additional test should be included 
@@ -666,8 +671,19 @@ SumCheck = ABS(test_f_in_sum("TIMESgdx") - test_f_in_sum("TIMESreport"));
 execute$(SumCheck > tolerance) 'msg "%username%" /time:0 Aborted due to difference between data in TIMES gdx and TIMES report script: & /UIzCheck/' ;
 ABORT$(SumCheck   > tolerance) "Aborted due to difference between data in TIMES gdx and TIMES report script"
 
+
 *============================================================================================
-* 8 Write reporting to gdx and csv
+* 8 Expanded TIMES reporting (optional) 
+*============================================================================================
+$ontext
+The purpose of this section is to expand the TIMESreport too capture additional dimensions. 
+Examples of additional dimensions could be user defined technology_groups,end uses,fuel_groups. Please contact
+Energy modelling lab if you want to learn more about how additional dimensions may be added
+to the TIMES reporting tool by defining additional user sets in VEDA.
+$offtext
+
+*============================================================================================
+* 9 Write reporting to gdx and csv
 *============================================================================================
 
 *Write timesreport gdx-file including set definitions
