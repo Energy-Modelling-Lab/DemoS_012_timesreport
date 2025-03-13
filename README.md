@@ -13,16 +13,17 @@
 This repo represents work in progress related to developing a generic gams script for reporting results from a TIMES model in a long form  (i.e., pivot ready format). 
 The repo is based on the TIMES DemoS_012 model accompaing VEDA. The demo model has been extend by adding the following files: 
 
-#1. \TIMESreport\timesreport_DemoS_012.gms
+#1. \TIMESreport\timesreport.gms
 GAMS script which collects data from TIMES gdx output file into a pivot ready format
 
 #2. Sets-DemoModels.xlsx (updated)
-Updated to include process group set used for reporting in #1
+Updated to include process and commodity group set used for reporting in #1
 
-#3. \SuppXLS\Scen_Z_PRC_GMAP2GDX_WRITE.xlsx
-Scenario file that ensure that process group set from #2 are included in TIMES-GDX output gdx file
+#3. SysSettings.xlsx (updated)
+Updated to include definition to include ~TFM_COMGRP, which creates COM_GMAP set description into the raw gdx TIMES output file.
 
-#4. \SuppXLS\Scen_Z_TIMESReport.xlsx
+#4. Scen_Z_TIMESReport.xlsx (updated)
+Creates PRC_GMAP and writes process and commodity group set description into the raw gdx TIMES output file
 Scenario file is used to run the GAMS script automatically after solving the TIMES model
 
 #5. \TIMESreport\runMerge_GDX2CSV_TIMESreports.bat
@@ -31,9 +32,7 @@ File that merges TIMESreport gdx files across different scenario runs and output
 #6. \TIMESreport\TIMESreport_DemoS_012.xlsx
 Excel file which based on the csv-file from #5 shows results from TIMES using pivot tables.
 
-#7. Finally the case definitions in the demo_model has been updated to include #3 and #4. 
-
-Additional documentation of the scripts will be added asap. If you have commments or suggestions please let me know.
+Additional documentation of the scripts will be added on an ongoing basis. If you have commments or suggestions please let me know.
 
 Best regards,
 
