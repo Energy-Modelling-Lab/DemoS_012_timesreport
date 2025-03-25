@@ -507,12 +507,12 @@ elapsedTIME("ante","05TIMESreportmaps") = TIMEelapsed;
 *============================================================================================
 * 5.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
 
-PARAMETER TESTsector        "Test if prc is only member of one sector (passed if empty)"
-          TESTsubsector     "Test if prc is only member of one subsector (passed if empty)"
-          TESTtechgroup     "Test if prc is only member of one techgroup (passed if empty)"
-          TESTservice       "Test if prc is only member of one service (passed if empty)"
-          TESTcapacityunit  "Test if prc is only member of one capacity unit (passed if empty)"
-          TESTcomgroup      "Test if com is only member of one commodity group (passed if empty)"
+PARAMETER TESTsector        "Test if prc is only member of one sector (passed if zero records)"
+          TESTsubsector     "Test if prc is only member of one subsector (passed if zero records)"
+          TESTtechgroup     "Test if prc is only member of one techgroup (passed if zero records)"
+          TESTservice       "Test if prc is only member of one service (passed if zero records)"
+          TESTcapacityunit  "Test if prc is only member of one capacity unit (passed if zero records)"
+          TESTcomgroup      "Test if com is only member of one commodity group (passed if zero records)"
 ;
 
 *Test if a proces is associated with more than one sector, subsector, techgroup or service
@@ -528,39 +528,44 @@ display TESTsector,TESTsubsector,TESTtechgroup,TESTservice,TESTcapacityunit,TEST
 
 IF(YES$card(TESTsector),
     display TESTsector;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple sectors. Check TESTsector parameter for details."';
-    ABORT "ERROR: Some processes are mapped to multiple sectors. Check TESTsector parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple sectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
 );
 
 IF(YES$card(TESTsubsector),
     display TESTsubsector;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple subsectors. Check TESTsubsector parameter for details."';
-    ABORT "ERROR: Some processes are mapped to multiple subsectors. Check TESTsubsector parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple subsectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
 );
 
 IF(YES$card(TESTtechgroup),
     display TESTtechgroup;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple techgroups. Check TESTtechgroup parameter for details."';
-    ABORT "ERROR: Some processes are mapped to multiple techgroups. Check TESTtechgroup parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple techgroups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
 );
 
 IF(YES$card(TESTservice),
     display TESTservice;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple services. Check TESTservice parameter for details."';
-    ABORT "ERROR: Some processes are mapped to multiple services. Check TESTservice parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple services. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
 );
 
 IF(YES$card(TESTcapacityunit),
     display TESTcapacityunit;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple capacity units. Check TESTcapacityunitservice parameter for details."';
-    ABORT "ERROR: Some processes are mapped to multiple capacity units. Check TESTcapacityunit parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple capacity units. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
 );
 
 IF(YES$card(TESTcomgroup),
     display TESTcomgroup;
-    execute 'msg "%username%" /time:0 "ERROR: Some commodity  are mapped to multiple commodities groups. Check TESTcomgroup parameter for details."';
-    ABORT "ERROR: Some commodities are mapped to multiple commodity groups. Check TESTcomgroup parameter for details.";
+    execute 'msg "%username%" /time:0 "ERROR: Some commodity  are mapped to multiple commodities groups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';    
 );
+
+* clean-up if previous version of  ABORT_DUE_TO_DUPLICATED_SETS.gdx exists
+$call 'del %pathTIMESmodel%TIMESreport\tempData\*_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx'
+
+* In case of any across the different maps write ABORT_DUE_TO_DUPLICATED_SETS.gdx and Abort TIMESReport
+IF(card(TESTsector) + card(TESTsubsector) + card(TESTservice) + card(TESTtechgroup) + card(TESTcapacityunit) + card(TESTcomgroup) > 0,
+                execute_unload '%pathTIMESmodel%TIMESreport\tempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx',
+		map_prc_sector, map_prc_subsector,map_prc_techgroup,map_prc_service,map_prc_capacityunit,map_com_comgroup,
+                TESTsector, TESTsubsector, TESTservice, TESTcapacityunit, TESTcomgroup	    
+    ABORT "ERROR: One of more of the processes and commodities maps include dublicates."
+    ;);
 
 
 elapsedTIME("ante","05TestMaps") = TIMEelapsed;
