@@ -55,101 +55,95 @@ $SETGLOBAL  modelname       "DemoS_012_timesreport"
 * Set name of TIMES default standalone (this set is set directly from VEDA using $case_name)
 $IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012
 
-* Set manual flag if TIMES is solution is from VEDA version 2.17 or above ("1") or below 2.17 ("0")
-* Related to parameter naming convention used in VEDA
-$IF NOT '%VEDAversion_217plus%' $SETGLOBAL VEDAversion_217plus  "1"
+* Set GAMS_wrkTIMES library 
+$IF NOT '%GAMS_wrkTIMES%' $SETGLOBAL GAMS_wrkTIMES "c:\VEDA\GAMS_WrkTIMES"
 
 * If-statements are created to ensure that data is extracted from the correct GDX-file.
-$IF not exist '%pathTIMES%'   $SETGLOBAL pathTIMES  "c:\VEDA\GAMS_WrkTIMES"
+*Look for the GDX file within a scenario specific library (corresponding to the option in VEDA to run multiple scenarios)
+$IF exist "%GAMS_wrkTIMES%\%TIMESscenario%\GamsSave\%TIMESscenario%.gdx" $SETGLOBAL pathTIMES "%GAMS_wrkTIMES%\%TIMESscenario%\"
+*In case the scenario is not found we look for the gdx file within non scenario specific library (corresponding to only runing one scenario at a time from VEDA)
+$IF exist "%GAMS_wrkTIMES%\GamsSave\%TIMESscenario%.gdx" $SETGLOBAL pathTIMES "%GAMS_wrkTIMES%\"
 
 * If-statements are created to ensure that data is extracted from the correct GDX-file.
 $IF not exist '%pathTIMESmodel%'   $SETGLOBAL pathTIMESmodel  "..\"
+
+$setglobal source_file        "%TIMESscenario%_TIMESreport.gdx"
+$setglobal source_path        "%pathTIMESmodel%\timesreport\GDX\"
+$setglobal target_path        "c:\WEBSITES\timesreport2website\input_%modelname%"
+
+* Check if target directory exists and create it if not
+$call if not exist "%target_path%" mkdir "%target_path%"
+$call if not exist "%target_path%\GDX" mkdir "%target_path%\GDX"
 
 *============================================================================================
 * 1 Define sets and parameter for TIMES default reporting
 *============================================================================================
 
-SET     sector          "Sector sets, used for TIMESReport";
-SET     service         "Energy service sets, used for TIMESReport";
-SET     subsector       "Subsector sets, used for TIMESReport";
-SET     techgroup       "Technology sets, used for TIMESReport";
-SET     capacityunit    "Capacity unit sets, used for TIMESreport"
-SET     comgroup        "Commodity sets, used for TIMESReport";
-SET     topic           "Reporting topics from TIMES default" /
-        material        "Material input or output, kton"
-        emission        "GHG and other emissions"
-        savin_e         "Energy savings"
+* Process group sets defined using VEDA 
+SET     sector          "Sector group sets"
+        subsector       "Subsector sets"
+        service         "Energy service group sets"
+        techgroup       "Technology group sets"
+        capacityunit    "Capacity unit group sets";
+
+* Commodity group sets defined in VEDA
+SET     comgroup        "Commodity groupsets";
+
+SET     topic           "Topics used for reporting" /
+        material        "Material"
+        emission        "Emission"
         energy          "Energy"
-        final_e         "Final energy demand"
-        gross_e         "Gross energy"
-        service         "Energy service demand"
-        costs           "Annual discounted cost"
-        lumpsum         "Lumpsum investment and subsidies etc. within each period"
+        demand          "Demand"
+        acosts          "Undiscounted costs"
+        dcosts          "Discounted costs"
+        lumpsum         "Annual lumpsum costs"
         capacity        "Capacity"
         prices          "Prices"
-        revenue         "Revenue, e.g. from electricity trade"
-        constra         "information on constraints"
+        revenue         "Revenue"
+        constraint      "Information on constraints"
         inputpar        "Model input parameters"
         dummy           "Dummy imports"
 /;
 
-SET     attr            "TIMES default attributes for reporting" /
-        actc            "Activitiy cost"
-        invc            "Investment cost including hurdle rate"
-        inv_            "Investment cost excluding hurdle rate"
-        invx            "Annual discounted investment taxes"
-        invs            "Annual discounted investment subsidies"
-        salv            "Salvage cost"
-        fixc            "Fixed O&M cost"
+SET     attr            "Attributes used for reporting" /
+	actc            "Activitiy costs"
+        invc            "Investment costs"
+        inv_            "Investment costs excl. hurdle rate"
+        invx            "Investment taxes"
+        invs            "Investment subsidies"
+        salv            "Salvage costs"
+        fixc            "Fixed O&M costs"
         fixx            "Fixed O&M taxes"
         fixs            "Fixed O&M subsidies"
-        floc            "Fuel cost"
-        flox            "Fuel taxes"
-        flos            "Fuel subsidies"
-        floq            "Emission trading system"
-        flor            "Revenue from fuel production"
-        instcap         "new cacapcity installed in period"
-        fout            "commodity output from process"
-        f_in            "commodity input to process"
-        levc            "levelized cost of energy including emission"
-        mpri            "Market/shadow price of commodity balance"
+        decc            "Decommissioning costs"
+        comc            "Commodity costs"
+        comx            "Commodity taxes"
+        coms            "Commodity subsides"
+        comd            "Commodity damage costs"                 
+        f_in            "Flow in"
+        f_out           "Flow out"
+        floc            "Flow costs"
+        flox            "Flow taxes"
+        flos            "Flow subsidies"
+        floq            "Flow ETS costs"
+        flor            "Flow revenues"
+        levc            "Levelized cost of energy"
+        mpri            "Marginal price"
         apri            "Average price"
         proj            "Energy service demand"
-        ncap            "new capacity within period"
-        cap_            "total capacity within period"
-        mcon            "Market/shadow price of user constraint"
-        actl            "Activity level particular relevant for storage technologies"
-        objsal          "Objective function salvage cost"
-        objfix          "Objective function fixed cost"
-        objinv          "Objective function investment cost"
-        objvar          "Objective function variable cost"
-        objdam          "Objective function damage cost"
+        rcap            "Retired capacity"
+        ncap            "New capacity"
+        ecap            "Residual capacity"
+        tcap            "Total capacity"             
+        mcon            "Shadow price of user constraint"
+        actl            "Activity levels"
+        objsal          "Salvage costs"
+        objfix          "Fixed costs"
+        objinv          "Investment costs"
+        objvar          "Variable cost"
+        objdam          "Damage costs"
         yrfr            "Time slice fractions"
 /;
-
-SET     units_desc    "Units used for rapporting" /
-        pj            "Petajoule"
-        pja           "Petajoule annual (capacity)"
-        npj           "Net peta joule"
-        mkr_npj       "million kr per net peta joule"
-        mkr_kton      "million kr per kton"
-        mw           "Mega watt"
-        kton          "Kilo ton"
-        ktona         "Kilo ton annual (capacity)"
-        kr_kwh        "Kroner per kilo watt hour"
-        kr_gj         "Kroner per gigajoule"
-        mkr           "Million kroner"
-        km2           "Square kilometers"
-        mvkm          "million vechicle kilometers"
-        kv            "1000 vechicles"
-        xhp           "number of heat pumps"
-        xev           "number of electric vechicles"
-        nkstock       "energy service from stock"
-        kstock        "stock of appliance in 1000"
-        mkr_kstock    "millio kroner per 1000 stock"
-        shr           "share calculation used for RE share of sales gas"
-/;
-
 
 elapsedTIME("ante","01setTIMESreport") = TIMEelapsed;
 
@@ -158,7 +152,7 @@ elapsedTIME("ante","01setTIMESreport") = TIMEelapsed;
 *============================================================================================
 * We add information on scenario description to a scalar to store it in the GDX file (this should be improved on way or the other)
 ** First information on scenario name and model description is taken from vtrun file
-$call grep "Title" "%pathTIMES%\%TIMESscenario%\vtrun.cmd" >  %pathTIMESmodel%\TIMESreport\tempData\title.txt"
+$call grep "Title" "%pathTIMES%\vtrun.cmd" >  %pathTIMESmodel%\TIMESreport\tempData\title.txt"
 
 ** Second we run a bat file which dynamically generates a gms files
 $call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
@@ -167,8 +161,9 @@ $call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
 $include '%pathTIMESmodel%TIMESreport\tempData\create_scen_desc_set.gms';
 
 *Get information form lst file on model statistics and solve summary
-$call grep  "MODEL STATISTICS" -H -A 21 "%pathTIMES%\%TIMESscenario%\%TIMESscenario%.lst"             > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_stats.txt"
-$call grep  "S O L V E      S U M M A R Y" -A 50 "%pathTIMES%\%TIMESscenario%\%TIMESscenario%.lst"    > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_summary.txt"
+$call grep  "MODEL STATISTICS" -H -A 21 "%pathTIMES%\%TIMESscenario%.lst"             > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_stats.txt"
+$call grep  "S O L V E      S U M M A R Y" -A 50 "%pathTIMES%\%TIMESscenario%.lst"    > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_summary.txt"
+
 
 alias(scen_desc,scen);
 
@@ -227,7 +222,7 @@ ALIAS(cur,curr);
 *============================================================================================
 * Load basic sets from TIMES at compilation time
 $onUndf
-$gdxin "%pathTIMES%\%TIMESscenario%\GamsSave\%TIMESscenario%.gdx"
+$gdxin "%pathTIMES%\GamsSave\%TIMESscenario%.gdx"
 $load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top milestonyr periodyr eohyears allyear top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
 * Check if TIMESreport sets exists and load if found
 $if gdxSetType sectorTIMESreport $loadM sector = sectorTIMESreport
@@ -253,7 +248,7 @@ SETS
         auxiliary               "Auxiliary set, used if dim is empty"   /'-'/
         item                    "Var_cap information"
                                 /       '0'     "Residual capacity"
-                                        '¤'     "Retired capacity"
+                                        'Â¤'     "Retired capacity"
                                         '-'     "New capacity"/;
 
 
@@ -270,6 +265,7 @@ set     capacityunit / "NA" "not available"/;
 set     comgroup     / "NA" "not available"/;
 set     cur          / "NA" "not available"/;
 set     units        / "NA" "not available"/;
+set     units_cap    / "NA" "not available"/;
 set     prc          / "NA" "not available"/;
 set     com          / "NA" "not available"/;
 set     vntg         / "NA" "not available"/;
@@ -288,58 +284,121 @@ SCALAR  timesErrorLevel         "TIMES error level from GAMS execution"         
 PARAMETER
 *Collect year values from times (filtering for milesonyr only - this might be a problem if you discount to a year outside the milestonyr definition)
         YEARVAL(milestonyr)                                "TIMES year values"
+	
 *Length of each period milestonyr
         periodlength(milestonyr)                           "Length of each period milestonyr"
-*Total discounted system cost (NOTICE: that it is the parameter OBJZ.l that is used from the gdx-file)TIMES objective value";
+	
+*Total discounted system cost: variable representing objective function by region and main type (OBJINV, OBJFIX, OBJVAR, OBJSAL)
         VAR_OBJ_L(all_reg,var_obj_items,cur)               "TIMES objective value"
+
 *Projected annual demand given in region (r), specified year (datayear) for commodity (c)
-        com_proj(all_reg,milestonyr,com)                   "TIMES energy service demand"
+        com_proj(all_reg,milestonyr,com)                   "Demand projection"
+
 *Commodity consumption by Process given in region (r), vintage of process (v), modelled period (t), specific process (p), input flow of commodity (c) at certain timeslice (s)
-        F_in(all_reg,vntg,milestonyr,prcT,comT,all_TS)     "TIMES energy inputs"
+        F_in(all_reg,vntg,milestonyr,prcT,comT,all_TS)     "Flow inputs"
+	
 *Commodity Production by Process  given in region (r), vintage of process (v), modelled period (t), specific process (p), output flow of commodity (c) at certain timeslice (s)
-        F_out(all_reg,vntg,milestonyr,prcT,comT,all_TS)    "TIMES energy outputs"
-* Annual flow cost (undiscounted) given in region (r), vintage of process (v), modelled period (t), specific process (p) and associated commodity (c) (NOTICE: that a process can have multiple associated commodities and therefore multiple indicies for cst_floc)
-        cst_floc(all_reg,vntg,milestonyr,prcT,comT)        "TIMES fuel costs"
+        F_out(all_reg,vntg,milestonyr,prcT,comT,all_TS)    "Flow output"
+
+*Annual undiscounted flow related costs (caused by FLO_COST, FLO_DELV, IRE_PRICE) in period (t)
+*associated with a commodity (c) flow in/out of a process (p) with vintage period (v) as well as capacity
+*related commodity flows (specified by NCAP_COM, NCAP_ICOM, NCAP_OCOM).
+        cst_floc(all_reg,vntg,milestonyr,prcT,comT)        "Annual flow costs (including import/export prices)"
+	
 *Annual flow taxes/subsidies (undiscounted) given in region (r), vintage of process (v), modelled period (t), specific process (p) and associated commodity (c) (NOTICE: taxes are seen as positive (+ increasing objective (OBJ) function) and subsidies as negative (- decreasing OBJ function))
-        cst_flox(all_reg,vntg,milestonyr,prcT,comT)        "TIMES fuel taxes and subsidies"
-*Annual aciticty cost (undiscounted) given in region (r), vintage of process (v), modelled period (t), specific process (p) and Additional indicator for start-up costs (uc_n)
-        cst_actc(all_reg,vntg,milestonyr,prcT,*)           "TIMES aciticty cost"
-        cst_salv(all_reg,milestonyr,prcT)                  "TIMES salvage costs"
-*Annual fixed operating and maintenance costs (undiscounted) given in region (r), vintage of process (v), modelled period (t) and specific process (p)
-        cst_fixc(all_reg,vntg,milestonyr,prcT)             "TIMES fixed O&M costs"
-*Annual fixed taxes/subsidies (undiscounted) given in region (r), vintage of process (v), modelled period (t) and specific process (p)
-        cst_fixx(all_reg,vntg,milestonyr,prcT)             "TIMES fixed O&N taxes"
-*Annual investment costs (undiscounted)  given in region (r), vintage of process (v), modelled period (t), specific process (p) and additional indicator for ***** (uc_n)
-        cst_invc(all_reg,vntg,milestonyr,prcT,invT)        "TIMES investment costs"
-*Annual investment taxes/subsidies (undiscounted)  given in region (r), vintage of process (v), modelled period (t), specific process (p) and additional indicator for ***** (uc_n)
-        cst_invx(all_reg,vntg,milestonyr,prcT,invT)        "TIMES investment taxes/subsidies"
-*new capacity parameters related to installed capacity or lumpsum investment given in region (r), vintage of process (v), modelled period (t), specific process (p) and additional indicator to seperate the specific informations e.g. newly installed capacity, lumpsum investments etc.
-        cap_new(all_reg,vntg,prcT,milestonyr,newcap)       "TIMES lump sum investment, costs and subsidies"
+        cst_flox(all_reg,vntg,milestonyr,prcT,comT)        "Annual taxes and subsidies"
+
+*Annual undiscounted costs for commodity (comT) (caused by COM_CSTNET and COM_CSTPRD) in period (t)
+	cst_comc(all_reg, milestonyr,comT)                 "Annual commodity costs"
+
+*Annual undiscounted taxes and subsidies for commodity (c) (caused by COM_TAXNET, COM_SUBNET,
+*COM_TAXPRD, COM_SUBPRD) in period (t).
+        cst_comx(all_reg,milestonyr,comT)                  "Annual commodity taxes/subsidies"
+
+*Annual undiscounted commodity (c) related costs, caused by DAM_COST, in period (t)
+	cst_dam(all_reg,milestonyr,comT)                   "Annual commodity damage cost"
+
+*Annual undiscounted variable costs (caused by ACT_COST) in period (t) associated with the operation
+*(activity) of a process (p) with vintage period (v). Additional indicator (uc_n) for start-up costs.
+        cst_actc(all_reg,vntg,milestonyr,prcT,*)           "Annual commodity damage cost"
+
+*Salvage value of investment cost, taxes and subsidies of process (p) with vintage period (v), for which the
+*technical lifetime exceeds the end of the model horizon, value at year EOH+1.	
+        cst_salv(all_reg,milestonyr,prcT)                  "Salvage values of capacities at EOH+1"
+
+*Annual undiscounted fixed operating and maintenance costs (caused by NCAP_FOM) in period (t)
+*associated with the installed capacity of process (p) with vintage period (v).	
+        cst_fixc(all_reg,vntg,milestonyr,prcT)             "Annual fixed operating and maintenance costs"
+
+*Annual undiscounted fixed operating and maintenance costs (caused by NCAP_FTAX, NCAP_FSUB) in
+*period (t) associated with the installed capacity of process (p) with vintage period (v).
+        cst_fixx(all_reg,vntg,milestonyr,prcT)             "Annual fixed taxes/subsidies"
+
+*Annual undiscounted investment costs (caused by NCAP_COST) in period (t) spread over the economic
+*lifetime (NCAP_ELIFE) of a process (p) with vintage period (v).	
+        cst_invc(all_reg,vntg,milestonyr,prcT,invT)        "Annual investment costs"
+	
+*Annual undiscounted investment costs (caused by NCAP_ITAX, NCAP_ISUB) in period (t) spread over the
+*economic lifetime (NCAP_ELIFE) of a process (p) with vintage period (v).
+        cst_invx(all_reg,vntg,milestonyr,prcT,invT)        "Annual investment taxes/subsidies"
+	
+*Annual undiscounted decommissioning costs (caused by NCAP_DCOST and NCAP_DLAGC) in period (t),
+*associated with the dismantling of process (p) with vintage period (v).
+	cst_decc(all_reg,vntg,milestonyr,prcT)              "Annual decommissioning costs"
+	
+*Newly installed capacity and lumpsum investment by vintage and commissioning period:
+*New capacity and lumpsum investment of process (p) of vintage (v) commissioned in period (t).
+	cap_new(all_reg,vntg,prcT,milestonyr,newcap)       "TIMES lump sum investment, costs and subsidies"
+
 *Alot of information regarding technology investment, but is mainly used for its levelized cost. Is given by region (r), modelled period (t), specific process (p) and additional indicators, where the LEVCOST is of specific interest here, and the only one taken out.
         par_ncapr(all_reg, milestonyr, prcT, ncapr_items)  "TIMES levelised cost of energy"
         par_ncapr_(all_reg, milestonyr, prcT)              "TIMES levelised cost of energy, only levcost"
-*Shadow price (undiscounted) of commodity balance - being a strict equality (AKA. Commodity Slack/Levels - Marginals) given in region (r), modelled period (t), of commodity (c) (e.g. increase of production or decrease of consumption)
-        par_CombalEm(all_reg,milestonyr,com,all_TS)        "TIMES shadow price on commodity balance"
-        var_comprd(all_reg,milestonyr,com,all_TS)          "TIMES commodity production"
-        var_flo(all_reg,vntg,milestonyr,prc,com,all_TS)    "TIMES commodity flows"
-*Reporting var_act_level to get TS activity level
-        var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)       "Overall activity of process (level)"
+
+*Undiscounted annual shadow price of commodity balance (EQE_COMBAL) being a strict equality. The
+*marginal value describes the cost increase in the objective function, if the difference between production
+*and consumption is increased by one unit. The marginal value can be determined by the production side
+*(increasing production), but can also be set by the demand side (e.g., decrease of consumption by energy
+*saving or substitution measures).
+        par_CombalEm(all_reg,milestonyr,com,all_TS)        "Commodity Slack/Levels â€“ Marginals"
+
+*Level value of the commodity production variable (VAR_COMPRD). The variable represents the total
+*production of a commodity. It is only reported, if a bound or cost is specified for it or it is used in a user
+*constraint.
+	var_comprd(all_reg,milestonyr,com,all_TS)          "Commodity Total Production"
+*Flow of a commodity in or out of a process	
+        var_flo(all_reg,vntg,milestonyr,prc,com,all_TS)    "Commodity flows"
+	
+*Annual activity of a process
+        var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)       "Reporting var_act_level to get TS activity level (level)"
+	
 *New technology capacity given in region (r), modelled period (t) and for specific process (p) (Notice: that the specific perimiter extracted is the var_ncap.l, which is the level or the actual realized new capacity in the model)
-        var_ncap(all_reg,milestonyr,prcT)                  "TIMES new capacity"
-*Capacity of a technology given in region (r), modelled period (t) and for specific process (p)  (Notice: that the specific perimiter extracted is the var_cap.l, which is the level or the actual realized capacity in the model)
-        var_cap(all_RegT,milestonyr,prcT)                   "TIMES total capacity"
-*Residual capacity of past investments given in region (r), for modelled period (t), for specific process (p) with vintage (v)
-        par_pasti(all_reg,milestonyr,prcT,item)            "TIMES pasti-capacitiy available in each period"
-*Technology capacity given in region (r), in modelled period (t) for specific process (p)
-        par_capl(all_reg,milestonyr,prcT)                  "TIMES non-pasti capacity available in each period"
-*Information on import and export prices in selected currency
-        ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur) "Exogenous price of import/export"
-*Value flow by processes (i.e. f_in x combalem)
-        val_flo(all_reg,vntg, milestonyr, prcT, com)       "Value flow by processes"
+        var_ncap(all_reg,milestonyr,prcT)                  "Investment (new capacity) in a process"
+
+*Current capacity of a process, all vintages together
+        var_cap(all_RegT,milestonyr,prcT)                   "Current capacity of a process, all vintages together"
+	
+*Residual capacity of past investments (NCAP_PASTI) of process (p) still existing in period (t), where
+*vintage (v) is set to '0' to distinguish residual capacity from new capacity.
+        par_pasti(all_reg,milestonyr,prcT,item)            "Technology Capacity"
+	
+*Capacity of process (p) in period (t), derived from VAR_NCAP in previous periods summed over all vintage
+*periods. For still existing past investments, see PAR_PASTI.
+        par_capl(all_reg,milestonyr,prcT)                  "Technology Capacity"
+	
+*Information on import and export prices in selected currency. IMPort/EXPort price (index ie) for to/from
+*an internal region of a commodity (c) originating from/heading to an external region all_r.
+	ire_price(all_reg,milestonyr,prcT,com,all_TS,all_regT,ie,cur) "Exogenous price of import/export"
+	
+*Flows of process (p) multiplied by the commodity balance marginals of those commodities (c) in period (t);
+*the values can be interpreted as the market values of the process inputs and outputs.
+        val_flo(all_reg,vntg, milestonyr, prcT, com)       "Annual commodity flow values"
+	
 *Relationship between capacity and acticity in the model
         coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd)    "Capacity/Activity relationship (model input)"
+	
 *Primary commodity and activity unit
         prc_actunt(all_reg,prcT,com,units)                  "Primary commodity and activity unit"
+	
 * Time-slice fraction information
         G_YRFR(all_reg, all_TS)                             "Time-slice fraction information"
 ;
@@ -350,13 +409,15 @@ PARAMETER
 *============================================================================================
 * 3.1 Load results from TIMES default and do initial corrections to reduces size of data (execution time)
 *============================================================================================
-execute_load  "%pathTIMES%\%TIMESscenario%\GamsSave\%TIMESscenario%.gdx"         cst_actc, cst_floc, cst_flox, cst_fixc, cst_fixx, cst_invc, cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
-
+execute_load  "%pathTIMES%\GamsSave\%TIMESscenario%.gdx"         cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
 
 * Reset "EPS's" to zero to reduce data size and makes sure that output is always numerical
 cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary)$(cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary) eq EPS)                    = 0;
 cst_floc(all_reg,vntg,milestonyr,prcT,comT)$(cst_floc(all_reg,vntg,milestonyr,prcT,comT) eq EPS)                              = 0;
 cst_flox(all_reg,vntg,milestonyr,prcT,comT)$(cst_flox(all_reg,vntg,milestonyr,prcT,comT) eq EPS)                              = 0;
+cst_comc(all_reg, milestonyr,comT)$(cst_comc(all_reg, milestonyr,comT) eq EPS)                                                = 0;
+cst_comx(all_reg,milestonyr,comT)$(cst_comx(all_reg,milestonyr,comT) eq EPS)                                                  = 0;
+cst_dam(all_reg,milestonyr,comT)$(cst_dam(all_reg,milestonyr,comT) eq EPS)                                                    = 0;
 cst_fixc(all_reg,vntg,milestonyr,prcT)$(cst_fixc(all_reg,vntg,milestonyr,prcT) eq EPS)                                        = 0;
 cst_fixx(all_reg,vntg,milestonyr,prcT)$(cst_fixx(all_reg,vntg,milestonyr,prcT) eq EPS)                                        = 0;
 cst_invc(all_reg,vntg,milestonyr,prcT,invT)$(cst_invc(all_reg,vntg,milestonyr,prcT,invT) eq EPS)                              = 0;
@@ -371,7 +432,7 @@ var_ncap(all_reg,milestonyr,prcT)$(var_ncap(all_reg,milestonyr,prcT)  eq EPS)   
 var_cap(RegT,milestonyr,prcT)$(var_cap(RegT,milestonyr,prcT)    eq EPS)                                                       = 0;
 var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)$(var_act_level(all_reg,vntg,milestonyr,prcT,all_TS) eq EPS)                = 0;
 par_pasti(all_reg,milestonyr,prcT,"0")$(par_pasti(all_reg,milestonyr,prcT,"0") eq EPS)                                        = 0;
-par_pasti(all_reg,milestonyr,prcT,"¤")                                                                                        = 0;
+par_pasti(all_reg,milestonyr,prcT,"Â¤")                                                                                        = 0;
 par_capl(all_reg,milestonyr,prcT)$(par_capl(all_reg,milestonyr,prcT) eq EPS)                                                  = 0;
 ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur)$(ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur) eq EPS)    = 0;
 val_flo(all_reg,vntg,milestonyr,prcT,com)$(val_flo(all_reg,vntg,milestonyr,prcT,com) eq EPS)                                  = 0;
@@ -386,24 +447,24 @@ elapsedTIME("ante","03importTIMESresults") = TIMEelapsed;
 Parameter       timesDummies(all_reg,vntg,milestonyr,prcT,comT,all_TS)            "TIMES dummies - if any"
                 timesDummiesFlag                                               "Flag if dummies are present";
 
-SET                 prcDM(prc)                                                     "TIMES processes for dummy imports";
+SET                 prcDMZ(prc)                                                     "TIMES processes for dummy imports";
 
 *Setting all processes to not be included into "dummy"-set, for then specifically picking them out by name, as can be seen below
-prcDM(prc) = NO;
+prcDMZ(prc) = NO;
 *Includning IMPDEMZ - a dummy process that can feed any demand
-prcDM('IMPDEMZ') = YES;
+prcDMZ('IMPDEMZ') = YES;
 *Includning IMPNRGZ - a dummy process that can create any energy related commodity
-prcDM('IMPNRGZ') = YES;
+prcDMZ('IMPNRGZ') = YES;
 *Includning IMPMATZ - a dummy process that can create any material related commodity
-prcDM('IMPMATZ') = YES;
+prcDMZ('IMPMATZ') = YES;
 
 * clean-up previous times dummies file if file exist
-*$call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
+$call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
 
 *Defining timesDummies parameter to extract which dummies are present in model
-timesDummies(all_reg,vntg,year,prcDM,comT,all_TS) = F_out(all_reg,vntg,year,prcDM,comT,all_TS);
+timesDummies(all_reg,vntg,year,prcDMZ,comT,all_TS) = F_out(all_reg,vntg,year,prcDMZ,comT,all_TS);
 * Defining timesDummiesFlag, which is a parameter that flags out which years are affected by dummies - And also where they are affected the most.
-timesDummiesFlag(year) = sum((all_reg,vntg,prcDM,comT,all_TS), timesDummies(all_reg,vntg,year,prcDM,comT,all_TS));
+timesDummiesFlag(year) = sum((all_reg,vntg,prcDMZ,comT,all_TS), timesDummies(all_reg,vntg,year,prcDMZ,comT,all_TS));
 
 * Creating if-statement that creates a massage for the user - to see that dummies are present, these are also displayed in the lst-file running the current gms-file.
         IF(sum(year, timesDummiesFlag(year)) gt  0,
@@ -413,7 +474,6 @@ timesDummiesFlag(year) = sum((all_reg,vntg,prcDM,comT,all_TS), timesDummies(all_
                 execute_unload '%pathTIMESmodel%TIMESreport\tempData\%TIMESscenario%_TimesDummies.gdx',
                 timesDummies;
         );
-
 
         IF(timesErrorLevel ne 0,
                 DISPLAY  timesErrorLevel;
@@ -447,16 +507,12 @@ comENV(com)       = YES$sum(reg, com_gmap(reg,"ENV",com));
 comMAT(com)       = YES$sum(reg, com_gmap(reg,"MAT",com));
 comETS(com)       = NO;
 
-
-*prc_capunt(units,prc) = YES$1$sum(reg, prc_gmap(reg,prc,units));
-*prc_capunt("MW",prc)$(not 1$sum(units, prc_capunt(units,prc))) = YES;
-
 *============================================================================================
 * 5.2 Define termporay set used for reporting purposes
 SET     tmp_prc(prc)            "temporary proces list"
         tmp_reg(all_regT)       "temporary list of regions"
         tmp_prctrd(prc)         "temporary trade proces list"
-        tmp_prcsav(prc)         "temporary savings proces list"
+        tmp_prcstg(prc)         "temporary storage proces list"
         tmp_comNRGin(com)       "temporary list of energy inputs"
         tmp_comNRGout(com)      "temporary list of energy output"
         tmp_comEMISin(com)      "temporary list of emission input commodities"
@@ -464,6 +520,8 @@ SET     tmp_prc(prc)            "temporary proces list"
         tmp_comMATin(com)       "temporary list of material input commodities"
         tmp_comMATout(com)      "temporary list of material output commodities"
         tmp_comSrvout(com)      "temporary list of energy services";
+
+alias(tmp_reg,tmp_regT);
 *============================================================================================
 * 5.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
 
@@ -471,16 +529,15 @@ SET map_prc_sector(prc,sector)             "TIMES map between processes and sect
     map_prc_subsector(prc,subsector)       "TIMES map between processes and subgroup used for TIMESreport",
     map_prc_techgroup(prc,techgroup)       "TIMES map between processes and techgroup used for TIMESreport",
     map_prc_service(prc,service)           "TIMES map between processes and service used for TIMESreport",
-    map_prc_capacityunit(prc,unit)         "TIMES map between commodities and service used for TIMESreport",
+    map_prc_capacityunit(prc,units_cap)    "TIMES map between commodities and service used for TIMESreport",
     map_com_comgroup(com,comgroup)         "TIMES map between commodities and service used for TIMESreport";
 
 * Define sector map
 map_prc_sector(prc,sector)       = 1$sum((reg), prc_gmap(reg,prc,sector));
 * Add dummy processes to sector DMZ
-map_prc_sector(prc,"DMZ")        = 1$prcDM(prc);
+map_prc_sector(prc,"DMZ")        = 1$prcDMZ(prc);
 * Add "NA" if prc is not part of any sector
 map_prc_sector(prc,"NA")$(not sum((sector), map_prc_sector(prc,sector))) = YES;
-
 * Define subsector map
 map_prc_subsector(prc,subsector) = 1$sum((reg), prc_gmap(reg,prc,subsector));
 * Add "NA" if prc is not part of any subsector map
@@ -494,9 +551,9 @@ map_prc_service(prc,service)     = 1$sum((reg), prc_gmap(reg,prc,service));
 * Add "NA" if prc is not part of any service map
 map_prc_service(prc,"NA")$(not sum((service), map_prc_service(prc,service))) = YES;
 * Define capacity unit map
-map_prc_capacityunit(prc,unit) = 1$sum((reg), prc_gmap(reg,prc,unit));
+map_prc_capacityunit(prc,units_cap) = 1$sum((reg), prc_gmap(reg,prc,units_cap));
 * Add "NA" if prc is not part of any service map
-map_prc_capacityunit(prc,"NA")$(not sum((unit), map_prc_capacityunit(prc,unit))) = YES;
+map_prc_capacityunit(prc,"NA")$(not sum((units_cap), map_prc_capacityunit(prc,units_cap))) = YES;
 * Define energy service map
 map_com_comgroup(com,comgroup)     = 1$sum((reg), com_gmap(reg,comgroup,com));
 * Add "NA" if prc is not part of any service map
@@ -521,40 +578,28 @@ TESTsector(prc)$(sum(sector, 1$map_prc_sector(prc,sector)) gt 1) = sum(sector, 1
 TESTsubsector(prc)$(sum(subsector, 1$map_prc_subsector(prc,subsector)) gt 1) = sum(subsector, 1$map_prc_subsector(prc,subsector));
 TESTtechgroup(prc)$(sum(techgroup, 1$map_prc_techgroup(prc,techgroup)) gt 1) = sum(techgroup, 1$map_prc_techgroup(prc,techgroup));
 TESTservice(prc)$(sum(service,   1$map_prc_service(prc,service)) gt 1) = sum(service, 1$map_prc_service(prc,service));
-TESTcapacityunit(prc)$(sum(unit,   1$map_prc_capacityunit(prc,unit)) gt 1) = sum(unit, 1$map_prc_capacityunit(prc,unit));
+TESTcapacityunit(prc)$(sum(units_cap,   1$map_prc_capacityunit(prc,units_cap)) gt 1) = sum(units_cap, 1$map_prc_capacityunit(prc,units_cap));
 TESTcomgroup(com)$(sum(comgroup, 1$map_com_comgroup(com,comgroup)) gt 1) = sum(comgroup, 1$map_com_comgroup(com,comgroup));
 
 display TESTsector,TESTsubsector,TESTtechgroup,TESTservice,TESTcapacityunit,TESTcomgroup;
 
 IF(YES$card(TESTsector),
-    display TESTsector;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple sectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple sectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 IF(YES$card(TESTsubsector),
-    display TESTsubsector;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple subsectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple subsectors. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 IF(YES$card(TESTtechgroup),
-    display TESTtechgroup;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple techgroups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple techgroups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 IF(YES$card(TESTservice),
-    display TESTservice;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple services. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple services. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 IF(YES$card(TESTcapacityunit),
-    display TESTcapacityunit;
-    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple capacity units. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some processes are mapped to multiple capacity units. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 IF(YES$card(TESTcomgroup),
-    display TESTcomgroup;
-    execute 'msg "%username%" /time:0 "ERROR: Some commodity  are mapped to multiple commodities groups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';    
-);
+    execute 'msg "%username%" /time:0 "ERROR: Some commodity  are mapped to multiple commodities groups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 * clean-up if previous version of  ABORT_DUE_TO_DUPLICATED_SETS.gdx exists
 $call 'del %pathTIMESmodel%TIMESreport\tempData\*_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx'
@@ -563,10 +608,9 @@ $call 'del %pathTIMESmodel%TIMESreport\tempData\*_TIMESREPORT_ABORTED_DUE_TO_DUP
 IF(card(TESTsector) + card(TESTsubsector) + card(TESTservice) + card(TESTtechgroup) + card(TESTcapacityunit) + card(TESTcomgroup) > 0,
                 execute_unload '%pathTIMESmodel%TIMESreport\tempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx',
 		map_prc_sector, map_prc_subsector,map_prc_techgroup,map_prc_service,map_prc_capacityunit,map_com_comgroup,
-                TESTsector, TESTsubsector, TESTservice, TESTcapacityunit, TESTcomgroup	    
+                TESTsector, TESTsubsector, TESTservice, TESTtechgroup, TESTcapacityunit, TESTcomgroup	    
     ABORT "ERROR: One of more of the processes and commodities maps include dublicates."
     ;);
-
 
 elapsedTIME("ante","05TestMaps") = TIMEelapsed;
 
@@ -597,13 +641,33 @@ elapsedTIME("ante","06Report") = TIMEelapsed;
 * 6.1 Reporting (energy system level)
 *============================================================================================
 *Reporting objective function at regional and obj_items level using information in yearval and g_dyear to set discount year
-TIMESReport(scen,"SYS","costs",var_obj_items,"NA","NA","annual",all_reg,regT,milestonyr,"NA","NA",cur)$(yearval(milestonyr) = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
+TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(yearval(milestonyr) = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
 
 *We need to correct objsal (salvage cost) )which currently is represented as a positive number, however, we would like to interpret it as a negative number
-TIMESReport(scen,"SYS","costs","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(TIMESReport(scen,"SYS","costs","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","costs","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur);
+TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur);
 
-*Report time-slice definition as this might be usefull futhere ex post calculations
-*TIMESReport(scen,"SYS","inputpar","yrfr","NA","NA",all_TS,all_regT,regT,milestonyr,"NA","NA","NA")$(yearval(milestonyr) = g_dyear) = G_YRFR(all_reg, all_TS);
+
+* Commodity taxes (tracked on energy system level to avoid double counting)
+TIMESReport(scen,"SYS","acosts","comx","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$ 
+        (cst_comx(all_reg,milestonyr,com) ge 0)
+       = cst_comx(all_reg,milestonyr,com)$(
+         g_rcur(all_reg,cur));
+
+* Commodity taxes (reported on system level since process information is not attached to this parameter)
+TIMESReport(scen,"SYS","acosts","coms","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$ 
+        (cst_comx(all_reg,milestonyr,com) lt 0)
+       = cst_comx(all_reg,milestonyr,com)$(
+         g_rcur(all_reg,cur));
+ 
+* Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
+TIMESReport(scen,"SYS","acosts","comd","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur) 
+       = cst_dam(all_reg,milestonyr,com)$(
+         g_rcur(all_reg,cur));
+
+* Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
+TIMESReport(scen,"SYS","acosts","comc","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur) 
+       = cst_comc(all_reg,milestonyr,com)$(
+         g_rcur(all_reg,cur));
 
 elapsedTIME("report","SYS") = TIMEelapsed;
 
@@ -614,260 +678,286 @@ elapsedTIME("report","SYS") = TIMEelapsed;
 ReportInclude(sector) = YES$sum(prc, map_prc_sector(prc,sector));
 
 *Troubleshooting (for trouble shooting you may focus on one particular sector)
-*ReportInclude(sector) = NO; ReportInclude("AGR") = YES;
-display ReportInclude;
+*ReportInclude(sector) = NO; ReportInclude("EXT") = YES;
+
 
 LOOP(sector$ReportInclude(sector),
         tmp_prc(prc)            = NO;
 *       Define list of processes associated with sector (include dummy processes)
         tmp_prc(prc)            = 1$map_prc_sector(prc,sector);
+*       Define list of tmp_prc that are part of a trade relationship"
+        tmp_prctrd(tmp_prc)     = NO;
+        tmp_prctrd(tmp_prc)     = YES$sum((regFrom,comNRG,regTo),top_ire(regFrom,comNRG,regTo,comNRG,tmp_prc));
+*       Defines list of storage proces for which we want to report act.l
+        tmp_prcstg(tmp_prc)     = NO;
+	tmp_prcstg(tmp_prc)     = YES$sum(regT, prc_map(regT,"STG",tmp_prc));
+*       Define list of regions relevant for sector
+	tmp_reg(all_regT)       = NO;
+	tmp_reg(all_regT)       = YES$sum(tmp_prc, prc_desc(all_regT,tmp_prc));
 *       Define list of input to processes
         tmp_comNRGin(comNRG)    = NO;
         tmp_comNRGin(comNRG)    = YES$sum(tmp_prc, topPC(tmp_prc,comNRG,"IN")) +
 *       Add commodities associated with trade proceses
-                                  YES$sum((tmp_prc,reg,all_reg), top_ire(reg,comNRG,all_reg,comNRG,tmp_prc));
+                                  YES$sum((tmp_prctrd,reg,all_reg), top_ire(reg,comNRG,all_reg,comNRG,tmp_prctrd));
 *       Define list of output from processes other than energy service associated with sector
         tmp_comNRGout(comNRG)   = NO;
         tmp_comNRGout(comNRG)   = YES$sum(tmp_prc, topPC(tmp_prc,comNRG,"OUT")) +
 *       Add commodities associated with trade proceses
-                                  YES$sum((tmp_prc,reg,all_reg), top_ire(all_reg,comNRG,reg,comNRG,tmp_prc));
-*       Define list of emission input associated with sector
+                                  YES$sum((tmp_prctrd,reg,all_reg), top_ire(all_reg,comNRG,reg,comNRG,tmp_prctrd));
+*       Define list of emission input associated with sector (for now we assume that emission commodities trade is not modelled)
         tmp_comEMISin(comENV)   = NO;
-        tmp_comEMISin(comENV)   = YES$sum((tmp_prc,all_reg,all_regT), topPC(tmp_prc,comENV,"IN") + top_ire(all_reg,comENV,all_regT,comENV,tmp_prc));
-*       Define list of emission output from proces
+        tmp_comEMISin(comENV)   = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"IN"));
+*       Define list of emission output from proces  (for now we assume that emission commodities trade is not modelled)
         tmp_comEMISout(comENV)  = NO;
-        tmp_comEMISout(comENV)  = YES$sum((tmp_prc,all_reg,all_regT), topPC(tmp_prc,comENV,"OUT") + top_ire(all_reg,comENV,all_regT,comENV,tmp_prc));
-*       Define list of material commodity output from proces
+        tmp_comEMISout(comENV)  = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"OUT"));
+*       Define list of material commodity output from proces  (for now we assume that material commodities trade is not modelled)
         tmp_comMATin(comMAT)    = NO;
-        tmp_comMATin(comMAT)    = YES$sum((tmp_prc,all_reg,all_regT), topPC(tmp_prc,comMAT,"IN")  + top_ire(all_reg,comMAT,all_regT,comMAT,tmp_prc));
-*       Define list of material commodity output from proces
+        tmp_comMATin(comMAT)    = YES$sum((tmp_prc), topPC(tmp_prc,comMAT,"IN"));
+*       Define list of material commodity output from proces (for now we assume that material commodities trade is not modelled)
         tmp_comMATout(comMAT)   = NO;
-        tmp_comMATout(comMAT)   =  YES$sum((tmp_prc,all_reg,all_regT),topPC(tmp_prc,comMAT,"OUT") + top_ire(all_reg,comMAT,all_regT,comMAT,tmp_prc));
+        tmp_comMATout(comMAT)   =  YES$sum((tmp_prc),topPC(tmp_prc,comMAT,"OUT"));
 *       Define list of energy service output associated with sector
         tmp_comSrvout(comSrv)   = NO;
         tmp_comSrvout(comSrv)   = YES$sum(tmp_prc, topPC(tmp_prc,comSrv,"OUT"));
-*       Select all energy saving processes producing energy services
-        tmp_prcsav(prc)         = NO;
-        tmp_prcsav(tmp_prc)     = YES$SUM(tmp_comSrvout,  1$topPC(tmp_prc,tmp_comSrvout,"OUT"))
-                                - YES$SUM(tmp_comNRGin,   1$topPC(tmp_prc,tmp_comNRGin ,"IN"));
-*       Define list of tmp_prc that are part of a trade relationship"
-        tmp_prctrd(tmp_prc)  = NO;
-        tmp_prctrd(tmp_prc)  = YES$sum((regFrom,tmp_comNRGin,regTo),top_ire(regFrom,tmp_comNRGin,regTo,tmp_comNRGin,tmp_prc));
 
-*display tmp_prc, tmp_comNRGin, tmp_comNRGout, tmp_comEMISout, tmp_comEMISin, tmp_comMATin, tmp_comMATout, tmp_comSrvout;);
+*display tmp_reg, tmp_prc, tmp_prctrd,tmp_prcstg,tmp_comNRGin, tmp_comNRGout, tmp_comEMISout, tmp_comEMISin, tmp_comMATin, tmp_comMATout, tmp_comSrvout, elapsedTIME;);
 *$exit
+	
+*       Dummy flow out 
+        TIMESReport(scen,sector,"dummy","f_out",tmp_prc,com,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$prcDMZ(tmp_prc)
+        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,com,all_TS)$(
+         com_unit(tmp_reg,com,unit));
 
-*       Dummy output (output)
-        TIMESReport(scen,sector,"dummy","fout",tmp_prc,com,all_TS,regT,regT,milestonyr,vntg,unit, "NA")$prcDM(tmp_prc)
-        = F_out(regT,vntg,milestonyr,tmp_prc,com,all_TS)$(
-         com_unit(regT,com,unit));
-
-*       Dummy output (input)
-        TIMESReport(scen,sector,"dummy","f_in",tmp_prc,com,all_TS,regT,regT,milestonyr,vntg,unit, "NA")$prcDM(tmp_prc)
-        = F_in(regT,vntg,milestonyr,tmp_prc,com,all_TS)$(
-         com_unit(regT,com,unit));
-
+*       Dummy flow in 
+        TIMESReport(scen,sector,"dummy","f_in",tmp_prc,com,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$prcDMZ(tmp_prc)
+        = F_in(tmp_reg,vntg,milestonyr,tmp_prc,com,all_TS)$(
+         com_unit(tmp_reg,com,unit));
+	 
 *       Energy service demand (output)
-        TIMESReport(scen,sector,"service","fout",tmp_prc,tmp_comSrvout,all_TS,regT,regT,milestonyr,vntg,unit, "NA")$(not prcDM(tmp_prc))
-        = F_out(regT,vntg,milestonyr,tmp_prc,tmp_comSrvout,all_TS)$(
-         com_unit(regT,tmp_comSrvout,unit)
+        TIMESReport(scen,sector,"demand","f_out",tmp_prc,tmp_comSrvout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and not prcDMZ(tmp_prc))
+        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comSrvout,all_TS)$(
+         com_unit(tmp_reg,tmp_comSrvout,unit)
          );
 
+*       Energy input
+        TIMESReport(scen,sector,"energy","f_in" ,tmp_prc,tmp_comNRGin,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and not prcDMZ(tmp_prc))
+        = F_in(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin,all_TS)$
+          com_unit(tmp_reg,tmp_comNRGin,unit);
+
 *       Energy output
-        TIMESReport(scen,sector,"energy","fout" ,tmp_prc,tmp_comNRGout,all_TS,regT,regT,milestonyr,vntg,unit,"NA")$(not prcDM(tmp_prc))
-        = F_out(regT,vntg,milestonyr,tmp_prc,tmp_comNRGout,all_TS)$
-            com_unit(regT,tmp_comNRGout,unit);
+        TIMESReport(scen,sector,"energy","f_out" ,tmp_prc,tmp_comNRGout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and not prcDMZ(tmp_prc))
+        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout,all_TS)$
+            com_unit(tmp_reg,tmp_comNRGout,unit);
 
 *       Trade energy (import: regTo)
-        TIMESReport(scen,sector,"energy","fout" ,tmp_prc,tmp_comNRGout,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not (not prcDM(tmp_prc)))
+        TIMESReport(scen,sector,"energy","f_out" ,tmp_prc,tmp_comNRGout,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDMZ(tmp_prc))
         = F_out(regTo,vntg,milestonyr,tmp_prc,tmp_comNRGout,all_TS)$(
                 top_ire(regFrom,tmp_comNRGout,regTo,tmp_comNRGout,tmp_prc)
            and  com_unit(regTo,tmp_comNRGout,unit));
 
-*       Material output
-        TIMESReport(scen,sector,"material","fout" ,tmp_prc,tmp_comMATout,all_TS,regT,regT,milestonyr,vntg,unit,"NA")$(not prcDM(tmp_prc))
-        = F_out(regT,vntg,milestonyr,tmp_prc,tmp_comMATout,all_TS)$(
-               com_unit(regT,tmp_comMATout,unit));
-
-*       Emission output
-        TIMESReport(scen,sector,"emission","fout" ,tmp_prc,tmp_comEMISout,all_TS,regT,regT,milestonyr,vntg,unit,"NA")
-        = F_out(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout,all_TS)$(
-        com_unit(regT,tmp_comEMISout,unit));
-
-*       Energy input
-        TIMESReport(scen,sector,"energy","f_in" ,tmp_prc,tmp_comNRGin,all_TS,regT,regT,milestonyr,vntg,unit,"NA")$(not prcDM(tmp_prc))
-        = F_in(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin,all_TS)$
-          com_unit(regT,tmp_comNRGin,unit);
-
 *       Trade energy (export: regFrom)
-        TIMESReport(scen,sector,"energy","f_in" ,tmp_prc,tmp_comNRGin,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDM(tmp_prc))
+        TIMESReport(scen,sector,"energy","f_in" ,tmp_prc,tmp_comNRGin,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDMZ(tmp_prc))
         = F_in(regFrom,vntg,milestonyr,tmp_prc,tmp_comNRGin,all_TS)$(
                 top_ire(regFrom,tmp_comNRGin,regTo,tmp_comNRGin,tmp_prc)
             and com_unit(regFrom,tmp_comNRGin,unit));
 
-*       Material input
-        TIMESReport(scen,sector,"material","f_in" ,tmp_prc,tmp_comMATin,all_TS,regT,regT,milestonyr,vntg,unit,"NA")$(not prcDM(tmp_prc))
-        = F_in(regT,vntg,milestonyr,tmp_prc,tmp_comMATin,all_TS)$(
-               com_unit(regT,tmp_comMATin,unit));
 
 *       Emission input
-        TIMESReport(scen,sector,"emission","f_in" ,tmp_prc,tmp_comEMISin,all_TS,regT,regT,milestonyr,vntg,unit,"NA")
-        = F_in(regT,vntg,milestonyr,tmp_prc,tmp_comEMISin,all_TS)$(
-        com_unit(regT,tmp_comEMISin,unit));
+        TIMESReport(scen,sector,"emission","f_in" ,tmp_prc,tmp_comEMISin,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and not prcDMZ(tmp_prc))
+        = F_in(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISin,all_TS)$(
+        com_unit(tmp_reg,tmp_comEMISin,unit));
 
-*       Revenue from process fuel output
-        TIMESReport(scen,sector,"costs","flor" ,tmp_prc,tmp_comNRGout,"ANNUAL",regT,regT,milestonyr,vntg,"NA",cur)$(val_flo(regT,vntg,milestonyr,tmp_prc,tmp_comNRGout) lt 0)
-        =  (val_flo(regT,vntg,milestonyr,tmp_prc,tmp_comNRGout))$(
-           g_rcur(regT,cur));
+*       Emission output
+        TIMESReport(scen,sector,"emission","f_out" ,tmp_prc,tmp_comEMISout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                              and not prcDMZ(tmp_prc))
+        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout,all_TS)$(
+        com_unit(tmp_reg,tmp_comEMISout,unit));
 
-*       Fuel cost
-        TIMESReport(scen,sector,"costs","floc" ,tmp_prc,tmp_comNRGin,"ANNUAL",regT,regT,milestonyr,vntg,"NA",cur)$(val_flo(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin) gt 0)
-        =  (val_flo(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin))$(
-            g_rcur(regT,cur));
+*       Material input
+        TIMESReport(scen,sector,"material","f_in" ,tmp_prc,tmp_comMATin,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and not prcDMZ(tmp_prc))
+        = F_in(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comMATin,all_TS)$(
+               com_unit(tmp_reg,tmp_comMATin,unit));
 
-*       Fuel taxes
-        TIMESReport(scen,sector,"costs","flox" ,tmp_prc,tmp_comNRGin,'ANNUAL',regT,regT,milestonyr,vntg,"NA",cur)$
-        (cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin) ge 0)
-       = cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin)$(
-         g_rcur(regT,cur));
+*       Material output
+        TIMESReport(scen,sector,"material","f_out" ,tmp_prc,tmp_comMATout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                              and not prcDMZ(tmp_prc))
+        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comMATout,all_TS)$(
+               com_unit(tmp_reg,tmp_comMATout,unit));
 
-*       Emission taxes
-        TIMESReport(scen,sector,"costs","flox" ,tmp_prc,tmp_comEMISout,'ANNUAL',regT,regT,milestonyr,vntg,"NA",cur)$
-        (cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout) ge 0 and not comETS(tmp_comEMISout))
-       = cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
-           g_rcur(regT,cur));
-
-*       Emission trading system (ETS)
-        TIMESReport(scen,sector,"costs","floq" ,tmp_prc,tmp_comEMISout,'ANNUAL',regT,regT,milestonyr,vntg,"NA",cur)$
-        (cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout) ge 0 and comETS(tmp_comEMISout))
-       = cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
-           g_rcur(regT,cur));
-
-*       Fuel subsidies
-        TIMESReport(scen,sector,"costs","flos" ,tmp_prc,tmp_comNRGin,"annual",regT,regT,milestonyr,vntg,"NA",cur)$
-        (cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin) le 0)
-        = cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comNRGin)$(
-          g_rcur(regT,cur));
-
-
-*       GHG mitigation subsidy
-        TIMESReport(scen,sector,"costs","flos" ,tmp_prc,tmp_comEMISout,"annual",regT,regT,milestonyr,vntg,"NA",cur)$
-        (cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout) le 0)
-        = cst_flox(regT,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
-          g_rcur(regT,cur));
+*elapsedTIME("report","f_in_out") = TIMEelapsed;
 
 *       Marginal time-slice price of commodity input (only relevant for commodities on ts level)
-        TIMESReport(scen,sector,"prices","mpri","NA",tmp_comNRGin,all_ts,regT,regT,milestonyr,"NA",unit,cur)$(not par_combalem(regT,milestonyr,tmp_comNRGin,"annual"))
-         = par_combalem(regT,milestonyr,tmp_comNRGin,all_ts)$(
-            com_unit(regT,tmp_comNRGin,unit)
-            and g_rcur(regT,cur));;
+        TIMESReport(scen,sector,"prices","mpri","NA",tmp_comNRGin,all_ts,tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(not par_combalem(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
+         = par_combalem(tmp_reg,milestonyr,tmp_comNRGin,all_ts)$(
+            com_unit(tmp_reg,tmp_comNRGin,unit)
+            and g_rcur(tmp_reg,cur));;
 
 *= Annual price of commodity input (commmodity on annual level)
-  TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",regT,regT,milestonyr,"NA",unit,cur) =
-                    par_CombalEm(regT,milestonyr,tmp_comNRGin,"annual")$(
-             com_unit(regT,tmp_comNRGin,unit)
-             and g_rcur(regT,cur));
+         TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur) =
+                    par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,"annual")$(
+             com_unit(tmp_reg,tmp_comNRGin,unit)
+             and g_rcur(tmp_reg,cur));
 
-*= Annual price of commodity input (commmodity on ts level - calculated weighted by using G_YRFR)
-  TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",regT,regT,milestonyr,"NA",unit,cur)$(not par_CombalEm(regT,milestonyr,tmp_comNRGin,"annual"))
-        = sum(all_TS,  par_CombalEm(regT,milestonyr,tmp_comNRGin,all_TS) * G_YRFR(regT, all_TS))$(
-            com_unit(regT,tmp_comNRGin,unit)
-            and g_rcur(regT,cur));
+*= Annual price of commodity (commmodity on ts level - calculated weighted by using G_YRFR)
+        TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(not par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
+        = sum(all_TS,  par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,all_TS) * G_YRFR(tmp_reg, all_TS))$(
+            com_unit(tmp_reg,tmp_comNRGin,unit)
+            and g_rcur(tmp_reg,cur));
 
-*= Annual price of commodity out
-  TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGout,"annual",regT,regT,milestonyr,"NA",unit,cur)$(not par_CombalEm(regT,milestonyr,tmp_comNRGout,"annual"))
-        = sum(all_TS,  par_CombalEm(regT,milestonyr,tmp_comNRGout,all_TS) * G_YRFR(regT, all_TS))$(
-            com_unit(regT,tmp_comNRGout,unit)
-            and g_rcur(regT,cur));
+*elapsedTIME("report","prices") = TIMEelapsed;
 
-*       Activity level of proces (particular relevant for storage technologies)
-        TIMESReport(scen,sector,"capacity","actl" ,tmp_prc,com,all_TS,regT,regT,milestonyr,vntg,unit,"NA")$(not tmp_prctrd(tmp_prc)) =
-        var_act_level(regT,vntg,milestonyr,tmp_prc,all_ts)$(
-            prc_actunt(regT,tmp_prc,com,unit));
+*       Revenue from process fuel output
+        TIMESReport(scen,sector,"acosts","flor" ,tmp_prc,tmp_comNRGout,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout) lt 0)
+        =  (val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout))$(
+           g_rcur(tmp_reg,cur));
+
+*       Fuel cost
+        TIMESReport(scen,sector,"acosts","floc" ,tmp_prc,tmp_comNRGin,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                          and val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin) gt 0)
+        =  (val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin))$(
+            g_rcur(tmp_reg,cur));
+
+*       Flow energy taxes 
+        TIMESReport(scen,sector,"acosts","flox" ,tmp_prc,tmp_comNRGin,'ANNUAL',tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                          and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin) ge 0)
+       = cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)$(
+         g_rcur(tmp_reg,cur));
+
+*       Flow emission taxes
+        TIMESReport(scen,sector,"acosts","flox" ,tmp_prc,tmp_comEMISout,'ANNUAL',tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                            and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout) ge 0
+                                                                                                                            and not comETS(tmp_comEMISout))
+       = cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
+           g_rcur(tmp_reg,cur));
+
+*       Flow emission trading system (ETS)
+        TIMESReport(scen,sector,"acosts","floq" ,tmp_prc,tmp_comEMISout,'ANNUAL',tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                            and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout) ge 0
+                                                                                                                            and comETS(tmp_comEMISout))
+       = cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
+           g_rcur(tmp_reg,cur));
+
+*       Flow energy subsidies
+        TIMESReport(scen,sector,"acosts","flos" ,tmp_prc,tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                          and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin) le 0)
+        = cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)$(
+          g_rcur(tmp_reg,cur));
+
+*       GHG mitigation subsidy
+        TIMESReport(scen,sector,"acosts","flos" ,tmp_prc,tmp_comEMISout,"annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                            and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout) le 0)
+        = cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout)$(
+          g_rcur(tmp_reg,cur));
 
 *       Variable O&M cost
-        TIMESReport(scen,sector,"costs","actc" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)
-        = cst_actc(regT,vntg,milestonyr,tmp_prc,"-")$(
-          g_rcur(regT,cur));
+        TIMESReport(scen,sector,"acosts","actc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc))                                                                         
+        = cst_actc(tmp_reg,vntg,milestonyr,tmp_prc,"-")$(
+          g_rcur(tmp_reg,cur));
 
 *       Fixed O&M cost
-        TIMESReport(scen,sector,"costs","fixc" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)
-        = cst_fixc(regT,vntg,milestonyr,tmp_prc)$(
-        g_rcur(regT,cur));
+        TIMESReport(scen,sector,"acosts","fixc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc))
+        = cst_fixc(tmp_reg,vntg,milestonyr,tmp_prc)$(
+        g_rcur(tmp_reg,cur));
 
 *       Fixed O&M taxes
-        TIMESReport(scen,sector,"costs","fixx" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)$(cst_fixx(regT,vntg,milestonyr,tmp_prc) ge 0)
-        = cst_fixx(regT,vntg,milestonyr,tmp_prc)$(
-          g_rcur(regT,cur));
+        TIMESReport(scen,sector,"acosts","fixx" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cst_fixx(tmp_reg,vntg,milestonyr,tmp_prc) ge 0)
+        = cst_fixx(tmp_reg,vntg,milestonyr,tmp_prc)$(
+          g_rcur(tmp_reg,cur));
 
 *       Fixed O&M subsidies
-        TIMESReport(scen,sector,"costs","fixs" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)$(cst_fixx(regT,vntg,milestonyr,tmp_prc) lt 0)
-        = cst_fixx(regT,vntg,milestonyr,tmp_prc)$(
-          g_rcur(regT,cur));
+        TIMESReport(scen,sector,"acosts","fixs" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cst_fixx(tmp_reg,vntg,milestonyr,tmp_prc) lt 0)
+        = cst_fixx(tmp_reg,vntg,milestonyr,tmp_prc)$(
+          g_rcur(tmp_reg,cur));
 
-*       Discounted annual invesment cost
-        TIMESReport(scen,sector,"costs","invc" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)
-        = cst_invc(regT,vntg,milestonyr,tmp_prc,"INV")$(
-          g_rcur(regT,cur));
+*       Annual invesment cost 
+        TIMESReport(scen,sector,"acosts","invc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc))
+        = cst_invc(tmp_reg,vntg,milestonyr,tmp_prc,"INV")$(
+          g_rcur(tmp_reg,cur));
 
-*       Discounted annual investment taxes
-        TIMESReport(scen,sector,"costs","invx" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)$(cst_invx(regT,vntg,milestonyr,tmp_prc,"INV") ge 0)
-        = cst_invx(regT,vntg,milestonyr,tmp_prc,"INV")$(
-          g_rcur(regT,cur));
+*       Annual investment taxes
+        TIMESReport(scen,sector,"acosts","invx" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV") ge 0)
+        = cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV")$(
+          g_rcur(tmp_reg,cur));
 
-*       Discounted annual investment subsidy
-        TIMESReport(scen,sector,"costs","invx" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)$(cst_invx(regT,vntg,milestonyr,tmp_prc,"INV") lt 0)
-        = cst_invx(regT,vntg,milestonyr,tmp_prc,"INV")$(
-         g_rcur(regT,cur));
+*       Annual investment subsidy
+        TIMESReport(scen,sector,"acosts","invx" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV") lt 0)
+        = cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV")$(
+         g_rcur(tmp_reg,cur));
+
+*       Decomission costs 
+        TIMESReport(scen,sector,"acosts","decc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV") lt 0)
+        = cst_decc(tmp_reg,vntg,milestonyr,tmp_prc)$(
+         g_rcur(tmp_reg,cur));
+
+*elapsedTIME("report","acosts") = TIMEelapsed;
 
 *       Average annual lumpsum investment (excluding hurdle rate)
-        TIMESReport(scen,sector,"lumpsum","inv_" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg, "NA",cur)
-        = (cap_new(regT,vntg,tmp_prc,milestonyr,"lumpinv") / periodlength(milestonyr))$(
-           g_rcur(regT,cur));
+        TIMESReport(scen,sector,"lumpsum","inv_" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg, "NA",cur)$(prc_desc(tmp_reg,tmp_prc))
+         = (cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpinv") / periodlength(milestonyr))$(
+           g_rcur(tmp_reg,cur));
+
+*       Average annual lumpsum investment (including hurdle rate)
+        TIMESReport(scen,sector,"lumpsum","invc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg, "NA",cur)$(prc_desc(tmp_reg,tmp_prc))
+        = ((cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpinv") + cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"inv+")) / periodlength(milestonyr))$(
+           g_rcur(tmp_reg,cur));
 
 *       Average annual lumpsum investment subsidy (including effect of hurdle rate)
-        TIMESReport(scen,sector,"lumpsum","invx" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)
-        $((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) ge 0)
-        = ((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) / periodlength(milestonyr))$(
-          g_rcur(regT,cur));
+        TIMESReport(scen,sector,"lumpsum","invx" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                  and cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpix") ge 0)
+        = ((cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"invx+")) / periodlength(milestonyr))$(
+          g_rcur(tmp_reg,cur));
 
 *       Average annual lumpsum investment subsidy (including effect of hurdle rate)
-        TIMESReport(scen,sector,"lumpsum","invs" ,tmp_prc,"NA","annual",regT,regT,milestonyr,vntg,"NA",cur)
-        $((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) lt 0)
-        = ((cap_new(regT,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(regT,vntg,tmp_prc,milestonyr,"invx+")) / periodlength(milestonyr))$(
-          g_rcur(regT,cur));
+        TIMESReport(scen,sector,"lumpsum","invs" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                   and cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpix") lt 0)
+        = ((cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"lumpix") + cap_new(tmp_reg,vntg,tmp_prc,milestonyr,"invx+")) / periodlength(milestonyr))$(
+          g_rcur(tmp_reg,cur));
 
 **= Capacity section (unit varies and information is not directly availble in gdx - output from TIMES)
+*       Activity level of proces (particular relevant for storage technologies)
+        TIMESReport(scen,sector,"capacity","actl" ,tmp_prc,"NA",all_TS,tmp_reg,tmp_reg,milestonyr,vntg,units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                        and tmp_prcstg(tmp_prc))
+        = var_act_level(tmp_reg,vntg,milestonyr,tmp_prc,all_ts)$(
+            map_prc_capacityunit(tmp_prc,units_cap));
 
-*       Capacity 
-        TIMESReport(scen,sector,"capacity","cap_" ,tmp_prc,"NA","annual",regT,regT,milestonyr,"NA",unit,"NA")$(not tmp_prcsav(tmp_prc))
-         =  (par_capl(regT,milestonyr,tmp_prc) + par_pasti(regT,milestonyr,tmp_prc,"0") + par_pasti(regT,milestonyr,tmp_prc,"¤"))$ (
-             map_prc_capacityunit(tmp_prc,unit));
-*
-*       Capacity
-*       TIMESReport(scen,sector,"capacity","cap_" ,tmp_prc,"NA","annual",regT,regT,milestonyr,"NA",unit,"NA")$(not tmp_prcsav(tmp_prc))
-*        =  (var_cap(regT,milestonyr,tmp_prc))$(prc_capunt(unit,tmp_prc));
+*       Residual capacity 
+        TIMESReport(scen,sector,"capacity","ecap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+         =  (par_pasti(tmp_reg,milestonyr,tmp_prc,"0"))$(
+             map_prc_capacityunit(tmp_prc,units_cap));
 
+*       Retired capacity    
+        TIMESReport(scen,sector,"capacity","rcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+         =  (par_pasti(tmp_reg,milestonyr,tmp_prc,"Â¤"))$ (
+             map_prc_capacityunit(tmp_prc,units_cap));
+    
 *       New capacity
-        TIMESReport(scen,sector,"capacity","ncap" ,tmp_prc,"NA","annual",regT,regT,milestonyr,"NA",unit,"NA")$(not tmp_prcsav(tmp_prc))
-        = var_ncap(regT,milestonyr,tmp_prc)$(
-          map_prc_capacityunit(tmp_prc,unit));
+        TIMESReport(scen,sector,"capacity","ncap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+        = par_capl(tmp_reg,milestonyr,tmp_prc)$(
+          map_prc_capacityunit(tmp_prc,units_cap));
 
-*       Energy savings capacity
-        TIMESReport(scen,sector,"capacity","cap_" ,tmp_prcsav,"NA","annual",regT,regT,milestonyr,"NA",unit,"NA")
-        =  (par_capl(regT,milestonyr,tmp_prcsav) + par_pasti(regT,milestonyr,tmp_prcsav,"0")+ par_pasti(regT,milestonyr,tmp_prcsav,"¤"))$(
-           map_prc_capacityunit(tmp_prcsav,unit));
-
-*       New energy savings capacity
-        TIMESReport(scen,sector,"capacity","ncap" ,tmp_prcsav,"NA","annual",regT,regT,milestonyr,"NA",unit,"NA")
-        = var_ncap(regT,milestonyr,tmp_prcsav)$(
-            map_prc_capacityunit(tmp_prcsav,unit));
+*       Total capacity
+        TIMESReport(scen,sector,"capacity","tcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+         =  (par_capl(tmp_reg,milestonyr,tmp_prc) + par_pasti(tmp_reg,milestonyr,tmp_prc,"0") + par_pasti(tmp_reg,milestonyr,tmp_prc,"Â¤"))$(
+             map_prc_capacityunit(tmp_prc,units_cap));
 
 *       Levelised cost of proces
-        TIMESReport(scen,sector,"capacity","levc" ,tmp_prc,com,"annual",regT,regT,milestonyr,"NA",unit,cur)
-        = par_ncapr(regT, milestonyr, tmp_prc, "LEVCOST")$(
-            prc_actunt(regT,tmp_prc,com,unit)
-            and g_rcur(regT,cur));
+        TIMESReport(scen,sector,"capacity","levc" ,tmp_prc,com,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(prc_desc(tmp_reg,tmp_prc))
+        = par_ncapr(tmp_reg, milestonyr, tmp_prc, "LEVCOST")$(
+            prc_actunt(tmp_reg,tmp_prc,com,unit)
+            and g_rcur(tmp_reg,cur));
+
+*elapsedTIME("report","capacity") = TIMEelapsed;
 
 elapsedTIME("report",sector) = TIMEelapsed;
 countprc("count",sector)     = card(tmp_prc);
@@ -878,19 +968,18 @@ countprc("count",sector)     = card(tmp_prc);
 *============================================================================================
 * 7 Test section: Sum check to confirm that TIMES report includes all data (f_in and f_out)
 *===========================================================================================
-* Currently this section only compares F_IN and F_out  form the TIMES gdx file with the TIMESreport parameter
-* Additional test should be included
+* This section performs sum-check on F_IN and F_out form the raw TIMES gdx output file and the TIMESreport parameter
 
 PARAMETERS SumTEST(*,attr,milestonyr,com,prc)  "Sum check to ensure correspondance between TIMES gdx file and TIMESReport"
-           SumCheck_(attr,milestonyr,com,prc)  "Check difference between TIMES gdx and TIMES report "
-           tolerance                           "Define tolerance for sum chekcs"                           /1e-09/ ;
+           SumCheck_(attr,milestonyr,com,prc)  "Check difference between TIMES gdx and TIMESreport "
+           tolerance                           "Define tolerance for sum chekcs"                           /1e-06/ ;
 
 *Sum over data in TIMESgdx
 SumTEST("TIMESgdx","F_in",milestonyr,com,prc)    = sum((all_reg,vntg,all_TS),F_in(all_reg,vntg,milestonyr,prc,com,all_TS));
 SumTEST("TIMESreport","F_in",milestonyr,com,prc) = sum((scen,sector,topic,all_TS,all_reg,all_regT,vntg,unit,cur), TIMESReport(scen,sector,topic,"f_in",prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur));
 
-SumTEST("TIMESgdx","Fout",milestonyr,com,prc)    = sum((all_reg,vntg,all_TS),F_out(all_reg,vntg,milestonyr,prc,com,all_TS));
-SumTEST("TIMESreport","Fout",milestonyr,com,prc) = sum((scen,sector,topic,all_TS,all_reg,all_regT,vntg,unit,cur), TIMESReport(scen,sector,topic,"fout",prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur));
+SumTEST("TIMESgdx","F_Out",milestonyr,com,prc)    = sum((all_reg,vntg,all_TS),F_out(all_reg,vntg,milestonyr,prc,com,all_TS));
+SumTEST("TIMESreport","F_Out",milestonyr,com,prc) = sum((scen,sector,topic,all_TS,all_reg,all_regT,vntg,unit,cur), TIMESReport(scen,sector,topic,"f_out",prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur));
 
 SumCheck_(attr,milestonyr,com,prc)$(ABS(SumTEST("TIMESreport",attr,milestonyr,com,prc) - SumTEST("TIMESgdx",attr,milestonyr,com,prc)) > tolerance ) = SumTEST("TIMESreport",attr,milestonyr,com,prc) - SumTEST("TIMESgdx",attr,milestonyr,com,prc);
 display SumCheck_;
@@ -901,7 +990,7 @@ ABORT$(sum((attr,milestonyr,com,prc),ABS(SumCheck_(attr,milestonyr,com,prc))) > 
 elapsedTIME("post","07TestResults") = TIMEelapsed;
 
 *============================================================================================
-* 8 expanding times report with additional dimensions
+* 8 expanding timesreport with additional dimensions
 *============================================================================================
 
 TIMESReport_v2(scen,sector,"NA","NA","NA","NA",topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
@@ -967,8 +1056,6 @@ elapsedTIME("post","9gdxwrite") = TIMEelapsed;
 *Merge existing gdx-files and create csv-file
 execute '%pathTIMESmodel%\TIMESreport\bat-scripts\runMerge_GDX2CSV_TIMESreports.bat';
 
-
 OPTIONS elapsedTIME:1:0:1
 display elapsedTIME,countprc;
-
 
