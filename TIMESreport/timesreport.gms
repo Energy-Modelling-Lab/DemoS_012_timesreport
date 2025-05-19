@@ -52,28 +52,18 @@ $SETGLOBAL  standalone      "yes"
 
 $SETGLOBAL  modelname       "DemoS_012_timesreport"
 
-* Set name of TIMES default standalone (this set is set directly from VEDA using $case_name)
+* Set name name of TIMES scenario if this name does not already exist (the scenario name is defined automatically when runing TIMESreport from VEDA)
 $IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012
 
 * Set GAMS_wrkTIMES library 
-$IF NOT '%GAMS_wrkTIMES%' $SETGLOBAL GAMS_wrkTIMES "c:\VEDA\GAMS_WrkTIMES"
+$SETGLOBAL GAMS_wrkTIMES "c:\VEDA\GAMS_WrkTIMES"
 
-* If-statements are created to ensure that data is extracted from the correct GDX-file.
-*Look for the GDX file within a scenario specific library (corresponding to the option in VEDA to run multiple scenarios)
-$IF exist "%GAMS_wrkTIMES%\%TIMESscenario%\GamsSave\%TIMESscenario%.gdx" $SETGLOBAL pathTIMES "%GAMS_wrkTIMES%\%TIMESscenario%\"
-*In case the scenario is not found we look for the gdx file within non scenario specific library (corresponding to only runing one scenario at a time from VEDA)
-$IF exist "%GAMS_wrkTIMES%\GamsSave\%TIMESscenario%.gdx" $SETGLOBAL pathTIMES "%GAMS_wrkTIMES%\"
+* Set path to vtrun.cmd file if this path does not already exist (the path is defined automatically when runing TIMESreport scenario file from VEDA).
+$IF not exist '%pathGAMS_WrkTIMES_Model%'   $SETGLOBAL pathGAMS_WrkTIMES_Model  "%GAMS_wrkTIMES%\%TIMESscenario%"
 
-* If-statements are created to ensure that data is extracted from the correct GDX-file.
+* Set path to TIMES model if this path does not already exist (the path is defined automatically when runing TIMESreport scenario file from VEDA).
 $IF not exist '%pathTIMESmodel%'   $SETGLOBAL pathTIMESmodel  "..\"
 
-$setglobal source_file        "%TIMESscenario%_TIMESreport.gdx"
-$setglobal source_path        "%pathTIMESmodel%\timesreport\GDX\"
-$setglobal target_path        "c:\WEBSITES\timesreport2website\input_%modelname%"
-
-* Check if target directory exists and create it if not
-$call if not exist "%target_path%" mkdir "%target_path%"
-$call if not exist "%target_path%\GDX" mkdir "%target_path%\GDX"
 
 *============================================================================================
 * 1 Define sets and parameter for TIMES default reporting
@@ -122,6 +112,7 @@ SET     attr            "Attributes used for reporting" /
         comd            "Commodity damage costs"                 
         f_in            "Flow in"
         f_out           "Flow out"
+        comnet          "Net commodity flow"
         floc            "Flow costs"
         flox            "Flow taxes"
         flos            "Flow subsidies"
@@ -152,7 +143,7 @@ elapsedTIME("ante","01setTIMESreport") = TIMEelapsed;
 *============================================================================================
 * We add information on scenario description to a scalar to store it in the GDX file (this should be improved on way or the other)
 ** First information on scenario name and model description is taken from vtrun file
-$call grep "Title" "%pathTIMES%\vtrun.cmd" >  %pathTIMESmodel%\TIMESreport\tempData\title.txt"
+$call grep "Title" "%pathGAMS_WrkTIMES_Model%\vtrun.cmd" >  %GAMS_WrkTIMES_Modelmodel%\TIMESreport\tempData\title.txt"
 
 ** Second we run a bat file which dynamically generates a gms files
 $call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
@@ -161,9 +152,8 @@ $call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
 $include '%pathTIMESmodel%TIMESreport\tempData\create_scen_desc_set.gms';
 
 *Get information form lst file on model statistics and solve summary
-$call grep  "MODEL STATISTICS" -H -A 21 "%pathTIMES%\%TIMESscenario%.lst"             > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_stats.txt"
-$call grep  "S O L V E      S U M M A R Y" -A 50 "%pathTIMES%\%TIMESscenario%.lst"    > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_summary.txt"
-
+$call grep  "MODEL STATISTICS" -H -A 21 "%pathGAMS_WrkTIMES_Model%\%TIMESscenario%.lst"             > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_stats.txt"
+$call grep  "S O L V E      S U M M A R Y" -A 50 "%pathGAMS_WrkTIMES_Model%\%TIMESscenario%.lst"    > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_summary.txt"
 
 alias(scen_desc,scen);
 
@@ -222,7 +212,7 @@ ALIAS(cur,curr);
 *============================================================================================
 * Load basic sets from TIMES at compilation time
 $onUndf
-$gdxin "%pathTIMES%\GamsSave\%TIMESscenario%.gdx"
+$gdxin "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx"
 $load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top milestonyr periodyr eohyears allyear top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
 * Check if TIMESreport sets exists and load if found
 $if gdxSetType sectorTIMESreport $loadM sector = sectorTIMESreport
@@ -367,6 +357,9 @@ PARAMETER
 	var_comprd(all_reg,milestonyr,com,all_TS)          "Commodity Total Production"
 *Flow of a commodity in or out of a process	
         var_flo(all_reg,vntg,milestonyr,prc,com,all_TS)    "Commodity flows"
+    
+*Net commodity level
+        var_comnet_level(all_reg,milestonyr,com,all_TS)       "Net commodity production level (level)"
 	
 *Annual activity of a process
         var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)       "Reporting var_act_level to get TS activity level (level)"
@@ -409,7 +402,7 @@ PARAMETER
 *============================================================================================
 * 3.1 Load results from TIMES default and do initial corrections to reduces size of data (execution time)
 *============================================================================================
-execute_load  "%pathTIMES%\GamsSave\%TIMESscenario%.gdx"         cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
+execute_load  "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx" cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_comnet_level=var_comnet.l, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
 
 * Reset "EPS's" to zero to reduce data size and makes sure that output is always numerical
 cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary)$(cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary) eq EPS)                    = 0;
@@ -430,9 +423,10 @@ com_proj(all_reg,milestonyr,com)$(com_proj(all_reg,milestonyr,com) eq EPS)      
 par_ncapr(all_reg, milestonyr, prcT, ncapr_items)$(par_ncapr(all_reg, milestonyr, prcT, ncapr_items) eq EPS)                  = 0;
 var_ncap(all_reg,milestonyr,prcT)$(var_ncap(all_reg,milestonyr,prcT)  eq EPS)                                                 = 0;
 var_cap(RegT,milestonyr,prcT)$(var_cap(RegT,milestonyr,prcT)    eq EPS)                                                       = 0;
+var_comnet_level(all_reg,milestonyr,com,all_TS)$(var_comnet_level(all_reg,milestonyr,com,all_TS) eq EPS)                      = 0;
 var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)$(var_act_level(all_reg,vntg,milestonyr,prcT,all_TS) eq EPS)                = 0;
 par_pasti(all_reg,milestonyr,prcT,"0")$(par_pasti(all_reg,milestonyr,prcT,"0") eq EPS)                                        = 0;
-par_pasti(all_reg,milestonyr,prcT,"¤")                                                                                        = 0;
+par_pasti(all_reg,milestonyr,prcT,"¤")$(par_pasti(all_reg,milestonyr,prcT,"¤") eq EPS)                                      = 0;
 par_capl(all_reg,milestonyr,prcT)$(par_capl(all_reg,milestonyr,prcT) eq EPS)                                                  = 0;
 ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur)$(ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur) eq EPS)    = 0;
 val_flo(all_reg,vntg,milestonyr,prcT,com)$(val_flo(all_reg,vntg,milestonyr,prcT,com) eq EPS)                                  = 0;
@@ -444,7 +438,7 @@ elapsedTIME("ante","03importTIMESresults") = TIMEelapsed;
 * 4 Basic check for dummies in model
 *============================================================================================
 
-Parameter       timesDummies(all_reg,vntg,milestonyr,prcT,comT,all_TS)            "TIMES dummies - if any"
+Parameter       timesDummies(attr,all_reg,vntg,milestonyr,prcT,comT,all_TS)            "TIMES dummies - if any"
                 timesDummiesFlag                                               "Flag if dummies are present";
 
 SET                 prcDMZ(prc)                                                     "TIMES processes for dummy imports";
@@ -462,9 +456,10 @@ prcDMZ('IMPMATZ') = YES;
 $call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
 
 *Defining timesDummies parameter to extract which dummies are present in model
-timesDummies(all_reg,vntg,year,prcDMZ,comT,all_TS) = F_out(all_reg,vntg,year,prcDMZ,comT,all_TS);
+timesDummies("f_in",all_reg,vntg,year,prcDMZ,comT,all_TS) =    F_in(all_reg,vntg,year,prcDMZ,comT,all_TS);
+timesDummies("f_out",all_reg,vntg,year,prcDMZ,comT,all_TS) =    F_out(all_reg,vntg,year,prcDMZ,comT,all_TS);
 * Defining timesDummiesFlag, which is a parameter that flags out which years are affected by dummies - And also where they are affected the most.
-timesDummiesFlag(year) = sum((all_reg,vntg,prcDMZ,comT,all_TS), timesDummies(all_reg,vntg,year,prcDMZ,comT,all_TS));
+timesDummiesFlag(year) = sum((attr,all_reg,vntg,prcDMZ,comT,all_TS), timesDummies(attr,all_reg,vntg,year,prcDMZ,comT,all_TS));
 
 * Creating if-statement that creates a massage for the user - to see that dummies are present, these are also displayed in the lst-file running the current gms-file.
         IF(sum(year, timesDummiesFlag(year)) gt  0,
@@ -493,7 +488,7 @@ set     topPC(prc,com,in_out)   "Map processes to their commodity input and outp
         comSrv(com)             "Map energy service demands in the TIMES default solution gdx-file"
         comNRG(com)             "Map fuel input in the TIMES default solution gdx-file"
         comENV(com)             "Map environmental emissions commodities"
-        comETS(com)             "Map ETS commodities"
+        comETS(*)             "Map ETS commodities"
         comMAT(com)             "Map material variables like cement"
         comNRGtopic(com,topic)  "Map between fuel and topics (used for energy commodities)"
         prc_capunt(units,prc);
@@ -505,14 +500,15 @@ comSrv(com)       = YES$sum(reg, com_gmap(reg,"DEM",com));
 comNRG(com)       = YES$sum(reg, com_gmap(reg,"NRG",com));
 comENV(com)       = YES$sum(reg, com_gmap(reg,"ENV",com));
 comMAT(com)       = YES$sum(reg, com_gmap(reg,"MAT",com));
-comETS(com)       = NO;
+comETS("ETS1CO2") = YES;
+comETS("ETS2CO2") = YES;
 
 *============================================================================================
 * 5.2 Define termporay set used for reporting purposes
 SET     tmp_prc(prc)            "temporary proces list"
         tmp_reg(all_regT)       "temporary list of regions"
         tmp_prctrd(prc)         "temporary trade proces list"
-        tmp_prcstg(prc)         "temporary storage proces list"
+        tmp_prcsts(prc)         "temporary storage proces list"
         tmp_comNRGin(com)       "temporary list of energy inputs"
         tmp_comNRGout(com)      "temporary list of energy output"
         tmp_comEMISin(com)      "temporary list of emission input commodities"
@@ -534,10 +530,8 @@ SET map_prc_sector(prc,sector)             "TIMES map between processes and sect
 
 * Define sector map
 map_prc_sector(prc,sector)       = 1$sum((reg), prc_gmap(reg,prc,sector));
-* Add dummy processes to sector DMZ
-map_prc_sector(prc,"DMZ")        = 1$prcDMZ(prc);
-* Add "NA" if prc is not part of any sector
-map_prc_sector(prc,"NA")$(not sum((sector), map_prc_sector(prc,sector))) = YES;
+* Add "NA" if prc is not a dummy proces and is not part of any sector
+map_prc_sector(prc,"NA")$(not prcDMZ(prc) and not sum((sector), map_prc_sector(prc,sector))) = YES;
 * Define subsector map
 map_prc_subsector(prc,subsector) = 1$sum((reg), prc_gmap(reg,prc,subsector));
 * Add "NA" if prc is not part of any subsector map
@@ -669,16 +663,55 @@ TIMESReport(scen,"SYS","acosts","comc","NA",com,"annual",all_reg,all_reg,milesto
        = cst_comc(all_reg,milestonyr,com)$(
          g_rcur(all_reg,cur));
 
+* Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
+TIMESReport(scen,"SYS","emission","comnet","NA",comENV,all_TS,all_reg,all_reg,milestonyr,"NA",unit,"NA") 
+       = var_comnet_level(all_reg,milestonyr,comENV,all_TS)$(
+         com_unit(all_reg,comENV,unit));
+
 elapsedTIME("report","SYS") = TIMEelapsed;
 
 *============================================================================================
-* 6.2 Reporting (looping over sectors)
+* 6.2 Reporting (model input reporting)
 *============================================================================================
+
+*       import price assumptions
+        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,"IMPEXP",all_reg,milestonyr,"NA",unit, cur)
+        = ire_price(all_reg,milestonyr,prc,com,all_TS,all_reg,"IMP",cur)$(
+         com_unit(all_reg,com,unit));
+
+*       export price assumptions
+        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,all_reg,"IMPEXP",milestonyr,"NA",unit, cur)
+        = ire_price(all_reg,milestonyr,prc,com,all_TS,all_reg,"EXP",cur)$(
+         com_unit(all_reg,com,unit));
+         
+elapsedTIME("report","Input parameters") = TIMEelapsed;
+
+*============================================================================================
+* 6.3 Reporting (dummy reporting)
+*============================================================================================
+
+*       Dummy flow out 
+        TIMESReport(scen,"DMZ","dummy","f_out",prcDMZ,com,all_TS,all_reg,all_reg,milestonyr,vntg,unit, "NA")
+        = F_out(all_reg,vntg,milestonyr,prcDMZ,com,all_TS)$(
+         com_unit(all_reg,com,unit));
+
+*       Dummy flow in 
+        TIMESReport(scen,"DMZ","dummy","f_in",prcDMZ,com,all_TS,all_reg,all_reg,milestonyr,vntg,unit, "NA")
+        = F_in(all_reg,vntg,milestonyr,prcDMZ,com,all_TS)$(
+         com_unit(all_reg,com,unit));
+
+elapsedTIME("report","Dummies") = TIMEelapsed;
+
+
+*============================================================================================
+* 6.4 Reporting (loop sector reporting)
+*============================================================================================
+
 *Only include sectors that are part of the times solution
 ReportInclude(sector) = YES$sum(prc, map_prc_sector(prc,sector));
 
 *Troubleshooting (for trouble shooting you may focus on one particular sector)
-*ReportInclude(sector) = NO; ReportInclude("EXT") = YES;
+*ReportInclude(sector) = NO; ReportInclude("NA") = YES;
 
 
 LOOP(sector$ReportInclude(sector),
@@ -687,10 +720,10 @@ LOOP(sector$ReportInclude(sector),
         tmp_prc(prc)            = 1$map_prc_sector(prc,sector);
 *       Define list of tmp_prc that are part of a trade relationship"
         tmp_prctrd(tmp_prc)     = NO;
-        tmp_prctrd(tmp_prc)     = YES$sum((regFrom,comNRG,regTo),top_ire(regFrom,comNRG,regTo,comNRG,tmp_prc));
+        tmp_prctrd(tmp_prc)     = YES$sum((regFrom,com,regTo),top_ire(regFrom,com,regTo,com,tmp_prc));
 *       Defines list of storage proces for which we want to report act.l
-        tmp_prcstg(tmp_prc)     = NO;
-	tmp_prcstg(tmp_prc)     = YES$sum(regT, prc_map(regT,"STG",tmp_prc));
+        tmp_prcsts(tmp_prc)     = NO;
+	tmp_prcsts(tmp_prc)     = YES$sum(regT, prc_map(regT,"STS",tmp_prc));
 *       Define list of regions relevant for sector
 	tmp_reg(all_regT)       = NO;
 	tmp_reg(all_regT)       = YES$sum(tmp_prc, prc_desc(all_regT,tmp_prc));
@@ -706,10 +739,14 @@ LOOP(sector$ReportInclude(sector),
                                   YES$sum((tmp_prctrd,reg,all_reg), top_ire(all_reg,comNRG,reg,comNRG,tmp_prctrd));
 *       Define list of emission input associated with sector (for now we assume that emission commodities trade is not modelled)
         tmp_comEMISin(comENV)   = NO;
-        tmp_comEMISin(comENV)   = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"IN"));
+        tmp_comEMISin(comENV)   = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"IN")) +
+*       Add commodities associated with trade proceses
+                                  YES$sum((tmp_prctrd,reg,all_reg), top_ire(reg,comENV,all_reg,comENV,tmp_prctrd));
 *       Define list of emission output from proces  (for now we assume that emission commodities trade is not modelled)
         tmp_comEMISout(comENV)  = NO;
-        tmp_comEMISout(comENV)  = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"OUT"));
+        tmp_comEMISout(comENV)  = YES$sum((tmp_prc), topPC(tmp_prc,comENV,"OUT")) +
+*       Add commodities associated with trade proceses
+                                  YES$sum((tmp_prctrd,reg,all_reg), top_ire(all_reg,comENV,reg,comENV,tmp_prctrd));
 *       Define list of material commodity output from proces  (for now we assume that material commodities trade is not modelled)
         tmp_comMATin(comMAT)    = NO;
         tmp_comMATin(comMAT)    = YES$sum((tmp_prc), topPC(tmp_prc,comMAT,"IN"));
@@ -718,21 +755,14 @@ LOOP(sector$ReportInclude(sector),
         tmp_comMATout(comMAT)   =  YES$sum((tmp_prc),topPC(tmp_prc,comMAT,"OUT"));
 *       Define list of energy service output associated with sector
         tmp_comSrvout(comSrv)   = NO;
-        tmp_comSrvout(comSrv)   = YES$sum(tmp_prc, topPC(tmp_prc,comSrv,"OUT"));
+*       Add commodities associated with trade proceses
+	tmp_comSrvout(comSrv)   = YES$sum(tmp_prc, topPC(tmp_prc,comSrv,"OUT")) +
+*       Add commodities associated with trade proceses
+ 	                          YES$sum((tmp_prctrd,reg,all_reg), top_ire(all_reg,comSrv,reg,comSrv,tmp_prctrd));
 
-*display tmp_reg, tmp_prc, tmp_prctrd,tmp_prcstg,tmp_comNRGin, tmp_comNRGout, tmp_comEMISout, tmp_comEMISin, tmp_comMATin, tmp_comMATout, tmp_comSrvout, elapsedTIME;);
+*display tmp_reg, tmp_prc, tmp_prctrd,tmp_prcsts,tmp_comNRGin, tmp_comNRGout, tmp_comEMISout, tmp_comEMISin, tmp_comMATin, tmp_comMATout, tmp_comSrvout, elapsedTIME;);
 *$exit
-	
-*       Dummy flow out 
-        TIMESReport(scen,sector,"dummy","f_out",tmp_prc,com,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$prcDMZ(tmp_prc)
-        = F_out(tmp_reg,vntg,milestonyr,tmp_prc,com,all_TS)$(
-         com_unit(tmp_reg,com,unit));
-
-*       Dummy flow in 
-        TIMESReport(scen,sector,"dummy","f_in",tmp_prc,com,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$prcDMZ(tmp_prc)
-        = F_in(tmp_reg,vntg,milestonyr,tmp_prc,com,all_TS)$(
-         com_unit(tmp_reg,com,unit));
-	 
+		 
 *       Energy service demand (output)
         TIMESReport(scen,sector,"demand","f_out",tmp_prc,tmp_comSrvout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit, "NA")$(prc_desc(tmp_reg,tmp_prc)
                                                                                                                            and not prcDMZ(tmp_prc))
@@ -762,8 +792,7 @@ LOOP(sector$ReportInclude(sector),
         TIMESReport(scen,sector,"energy","f_in" ,tmp_prc,tmp_comNRGin,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDMZ(tmp_prc))
         = F_in(regFrom,vntg,milestonyr,tmp_prc,tmp_comNRGin,all_TS)$(
                 top_ire(regFrom,tmp_comNRGin,regTo,tmp_comNRGin,tmp_prc)
-            and com_unit(regFrom,tmp_comNRGin,unit));
-
+            and com_unit(regFrom,tmp_comNRGin,unit));  
 
 *       Emission input
         TIMESReport(scen,sector,"emission","f_in" ,tmp_prc,tmp_comEMISin,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
@@ -776,6 +805,18 @@ LOOP(sector$ReportInclude(sector),
                                                                                                                               and not prcDMZ(tmp_prc))
         = F_out(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comEMISout,all_TS)$(
         com_unit(tmp_reg,tmp_comEMISout,unit));
+
+*       Trade emission (import: regTo)
+        TIMESReport(scen,sector,"emission","f_out" ,tmp_prc,tmp_comEMISout,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDMZ(tmp_prc))
+        = F_out(regTo,vntg,milestonyr,tmp_prc,tmp_comEMISout,all_TS)$(
+                top_ire(regFrom,tmp_comEMISout,regTo,tmp_comEMISout,tmp_prc)
+           and  com_unit(regTo,tmp_comEMISout,unit));
+
+*       Trade emission (export: regFrom)
+        TIMESReport(scen,sector,"emission","f_in" ,tmp_prc,tmp_comEMISin,all_TS,regFrom,regTo,milestonyr,vntg,unit,"NA")$(tmp_prctrd(tmp_prc) and not prcDMZ(tmp_prc))
+        = F_in(regFrom,vntg,milestonyr,tmp_prc,tmp_comEMISin,all_TS)$(
+                top_ire(regFrom,tmp_comEMISin,regTo,tmp_comEMISin,tmp_prc)
+            and com_unit(regFrom,tmp_comEMISin,unit));
 
 *       Material input
         TIMESReport(scen,sector,"material","f_in" ,tmp_prc,tmp_comMATin,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
@@ -926,11 +967,11 @@ LOOP(sector$ReportInclude(sector),
 
 **= Capacity section (unit varies and information is not directly availble in gdx - output from TIMES)
 *       Activity level of proces (particular relevant for storage technologies)
-        TIMESReport(scen,sector,"capacity","actl" ,tmp_prc,"NA",all_TS,tmp_reg,tmp_reg,milestonyr,vntg,units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc)
-                                                                                                                        and tmp_prcstg(tmp_prc))
+        TIMESReport(scen,sector,"capacity","actl" ,tmp_prc,tmp_comNRGout,all_TS,tmp_reg,tmp_reg,milestonyr,vntg,unit,"NA")$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                        and tmp_prcsts(tmp_prc))
         = var_act_level(tmp_reg,vntg,milestonyr,tmp_prc,all_ts)$(
-            map_prc_capacityunit(tmp_prc,units_cap));
-
+            prc_actunt(tmp_reg,tmp_prc,tmp_comNRGout,unit));
+	    
 *       Residual capacity 
         TIMESReport(scen,sector,"capacity","ecap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
          =  (par_pasti(tmp_reg,milestonyr,tmp_prc,"0"))$(
@@ -959,7 +1000,7 @@ LOOP(sector$ReportInclude(sector),
 
 *elapsedTIME("report","capacity") = TIMEelapsed;
 
-elapsedTIME("report",sector) = TIMEelapsed;
+elapsedTIME("report_loop",sector) = TIMEelapsed;
 countprc("count",sector)     = card(tmp_prc);
 
 );
@@ -1058,4 +1099,3 @@ execute '%pathTIMESmodel%\TIMESreport\bat-scripts\runMerge_GDX2CSV_TIMESreports.
 
 OPTIONS elapsedTIME:1:0:1
 display elapsedTIME,countprc;
-
