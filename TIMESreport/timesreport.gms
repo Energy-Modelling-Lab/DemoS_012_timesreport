@@ -852,18 +852,41 @@ LOOP(sector$ReportInclude(sector),
 
 *elapsedTIME("report","prices") = TIMEelapsed;
 
-*       Revenue from process fuel output
+
+*       Energy flow revenu (output)
         TIMESReport(scen,sector,"acosts","flor" ,tmp_prc,tmp_comNRGout,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
-                                                                                                                           and val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout) lt 0)
-        =  (val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout))$(
+                                                                                                                           and (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout)
+															       + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout)) lt 0)
+        =  ( cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout) 
+	   + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout))$(
            g_rcur(tmp_reg,cur));
 
-*       Fuel cost
-        TIMESReport(scen,sector,"acosts","floc" ,tmp_prc,tmp_comNRGin,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
-                                                                                                                          and val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin) gt 0)
-        =  (val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin))$(
+
+*       Energy flow revenue (input) - this could be relevant for export process or ancillary services 
+        TIMESReport(scen,sector,"acosts","flor" ,tmp_prc,tmp_comNRGin,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                          and (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)
+															      + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)) lt 0)
+        =  (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)  
+	   + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin))$(
             g_rcur(tmp_reg,cur));
 
+*       Energy flow cost (output) 
+        TIMESReport(scen,sector,"acosts","floc" ,tmp_prc,tmp_comNRGout,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                           and (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout)
+															       + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout)) gt 0)
+        =  ( cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout) 
+	   + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGout))$(
+           g_rcur(tmp_reg,cur));
+
+	   
+*       Energy flow cost (input)
+        TIMESReport(scen,sector,"acosts","floc" ,tmp_prc,tmp_comNRGin,"ANNUAL",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                          and (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)
+															      + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)) gt 0)
+        =  (cst_floc(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin)  
+	   + val_flo(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin))$(
+            g_rcur(tmp_reg,cur));
+*
 *       Flow energy taxes 
         TIMESReport(scen,sector,"acosts","flox" ,tmp_prc,tmp_comNRGin,'ANNUAL',tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
                                                                                                                           and cst_flox(tmp_reg,vntg,milestonyr,tmp_prc,tmp_comNRGin) ge 0)
