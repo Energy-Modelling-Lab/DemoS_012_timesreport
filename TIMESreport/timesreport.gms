@@ -22,20 +22,19 @@ $ontext
 *Overview of code (13/03/2025)
 *=== 0 Define setglobal so that the code can be called externally
 *=== 1 Define sets and parameter for TIMES default reporting
-*=== 2 Declare TIMES default sets, parameters, variables and equations
-*=== 3 Define sets an parameters to import times solution
-*=== 4 TEST: Basic check and export of dummies from model
-*=== 5 General period and proces maps definitions
+*=== 2 Get scenario description and solver stats from gams files 
+*=== 3 Declare TIMES default sets, parameters, variables and equations
+*=== 4 Define sets an parameters to import times solution
+*=== 5 TEST: Basic check and export of dummies from model
+*=== 6 General period and proces maps definitions
        TEST: to ensure that prc and com maps are unique (to avoid double counting)
-*=== 6 Reporting TIMES default model results
-*=== 7 TEST: SUMcheck to confirm that TIMESreport includes all data from gdx file
-*=== 8 Expand TIMES report to include additional userdefined dimensions
+*=== 7 Reporting TIMES default model results
+*=== 8 TEST: SUMcheck to confirm that TIMESreport includes all data from gdx file
+*=== 9 Expand TIMES report to include additional userdefined dimensions
        TEST: To make sure that the expanded TIMESreport has the same number of records
-*=== 9 Write reporting to gdx and csv
+*=== 10 Write reporting to gdx and csv
 $offtext
-
 *$onUndef allows undefined symbols to be declared. Without it, GAMS would error immediately upon encountering an undefined symbol during compilation.
-
 
 *============================================================================================
 * 0 Define setglobal so that the code can be called externally
@@ -156,9 +155,10 @@ $call grep  "MODEL STATISTICS" -H -A 21 "%pathGAMS_WrkTIMES_Model%\%TIMESscenari
 $call grep  "S O L V E      S U M M A R Y" -A 50 "%pathGAMS_WrkTIMES_Model%\%TIMESscenario%.lst"    > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_summary.txt"
 
 alias(scen_desc,scen);
+elapsedTIME("ante","02getSCENARIOinfo") = TIMEelapsed;
 
 *============================================================================================
-* 2 Declare TIMES default sets, parameters, variables and equations
+* 3 Declare TIMES default sets, parameters, variables and equations
 *============================================================================================
 
 * Sets to be loaded from TIMES immediately at compilation time
@@ -208,7 +208,7 @@ ALIAS(all_ts,ts);
 ALIAS(cur,curr);
 
 *============================================================================================
-* 2.1 Import set definition from TIMES default model run (note this is a precondition for importing results)
+* 3.1 Import set definition from TIMES default model run (note this is a precondition for importing results)
 *============================================================================================
 * Load basic sets from TIMES at compilation time
 $onUndf
@@ -225,9 +225,9 @@ $gdxin
 ;
 
 alias(units,unit);
-elapsedTIME("ante","02setTIMESsolution") = TIMEelapsed;
+elapsedTIME("ante","03setTIMESsolution") = TIMEelapsed;
 *============================================================================================
-* 3 Define sets an parameters to import times solution
+* 4 Define sets an parameters to import times solution
 *============================================================================================
 SETS
 *        year(milestonyr)        "year relevant for linking iterating with cge"
@@ -400,7 +400,7 @@ PARAMETER
 *Notice: that all input sets of the below stated parameters should be filled out in a relatable set, which can either be translated in a script later or in the current file
 
 *============================================================================================
-* 3.1 Load results from TIMES default and do initial corrections to reduces size of data (execution time)
+* 4.1 Load results from TIMES default and do initial corrections to reduces size of data (execution time)
 *============================================================================================
 execute_load  "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx" cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_comnet_level=var_comnet.l, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
 
@@ -432,10 +432,10 @@ ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur)$(ire_price(all_reg,mile
 val_flo(all_reg,vntg,milestonyr,prcT,com)$(val_flo(all_reg,vntg,milestonyr,prcT,com) eq EPS)                                  = 0;
 coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd)$(coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd) eq EPS)                    = 0;
 
-elapsedTIME("ante","03importTIMESresults") = TIMEelapsed;
+elapsedTIME("ante","04importTIMESresults") = TIMEelapsed;
 
 *============================================================================================;
-* 4 Basic check for dummies in model
+* 5 Basic check for dummies in model
 *============================================================================================
 
 Parameter       timesDummies(attr,all_reg,vntg,milestonyr,prcT,comT,all_TS)            "TIMES dummies - if any"
@@ -451,6 +451,9 @@ prcDMZ('IMPDEMZ') = YES;
 prcDMZ('IMPNRGZ') = YES;
 *Includning IMPMATZ - a dummy process that can create any material related commodity
 prcDMZ('IMPMATZ') = YES;
+*Includning IMPDUCZ - a dummy process that can create any user constraints (relevant from VEDA version 4.1.1.1)
+prcDMZ('IMPDUCZ') = YES;
+
 
 * clean-up previous times dummies file if file exist
 $call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
@@ -475,14 +478,14 @@ timesDummiesFlag(year) = sum((attr,all_reg,vntg,prcDMZ,comT,all_TS), timesDummie
                 execute 'msg "%username%" /time:0 TIMES ERROR SEE TIMES SOLVER STATUS';
         );
 
-elapsedTIME("ante","04dummiesTIMES") = TIMEelapsed;
+elapsedTIME("ante","05dummiesTIMES") = TIMEelapsed;
 
 *============================================================================================
-* 5 General process  maps definitions
+* 6 General process  maps definitions
 *============================================================================================
 
 *============================================================================================
-* 5.1 Utilize existing commodity maps TIMES
+* 6.1 Utilize existing commodity maps TIMES
 
 set     topPC(prc,com,in_out)   "Map processes to their commodity input and output for the present TIMES default solution"
         comSrv(com)             "Map energy service demands in the TIMES default solution gdx-file"
@@ -504,7 +507,7 @@ comETS("ETS1CO2") = YES;
 comETS("ETS2CO2") = YES;
 
 *============================================================================================
-* 5.2 Define termporay set used for reporting purposes
+* 6.2 Define termporay set used for reporting purposes
 SET     tmp_prc(prc)            "temporary proces list"
         tmp_reg(all_regT)       "temporary list of regions"
         tmp_prctrd(prc)         "temporary trade proces list"
@@ -519,7 +522,7 @@ SET     tmp_prc(prc)            "temporary proces list"
 
 alias(tmp_reg,tmp_regT);
 *============================================================================================
-* 5.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
+* 6.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
 
 SET map_prc_sector(prc,sector)             "TIMES map between processes and sectors used for TIMESreport",
     map_prc_subsector(prc,subsector)       "TIMES map between processes and subgroup used for TIMESreport",
@@ -553,10 +556,10 @@ map_com_comgroup(com,comgroup)     = 1$sum((reg), com_gmap(reg,comgroup,com));
 * Add "NA" if prc is not part of any service map
 map_com_comgroup(com,"NA")$(not sum((comgroup), map_com_comgroup(com,comgroup))) = YES;
 
-elapsedTIME("ante","05TIMESreportmaps") = TIMEelapsed;
+elapsedTIME("ante","06TIMESreportmaps") = TIMEelapsed;
 
 *============================================================================================
-* 5.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
+* 6.3 Define maps that reflect proces and commodity sets defined in TIMES using prc_gmap
 
 PARAMETER TESTsector        "Test if prc is only member of one sector (passed if zero records)"
           TESTsubsector     "Test if prc is only member of one subsector (passed if zero records)"
@@ -606,10 +609,10 @@ IF(card(TESTsector) + card(TESTsubsector) + card(TESTservice) + card(TESTtechgro
     ABORT "ERROR: One of more of the processes and commodities maps include dublicates."
     ;);
 
-elapsedTIME("ante","05TestMaps") = TIMEelapsed;
+elapsedTIME("ante","06TestMaps") = TIMEelapsed;
 
 *============================================================================================
-* 6 Reporting TIMES default model results
+* 7 Reporting TIMES default model results
 *============================================================================================
 
 PARAMETER ReportInclude(sector)     "Flag YES if sector is to be included in timesreport";
@@ -632,7 +635,7 @@ PARAMETER       TIMESReport_v2(scen,sector,subsector,service,techgroup,comgroup,
 elapsedTIME("ante","06Report") = TIMEelapsed;
 
 *============================================================================================
-* 6.1 Reporting (energy system level)
+* 7.1 Reporting (energy system level)
 *============================================================================================
 *Reporting objective function at regional and obj_items level using information in yearval and g_dyear to set discount year
 TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(yearval(milestonyr) = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
@@ -671,7 +674,7 @@ TIMESReport(scen,"SYS","emission","comnet","NA",comENV,all_TS,all_reg,all_reg,mi
 elapsedTIME("report","SYS") = TIMEelapsed;
 
 *============================================================================================
-* 6.2 Reporting (model input reporting)
+* 7.2 Reporting (model input reporting)
 *============================================================================================
 
 *       import price assumptions
@@ -687,7 +690,7 @@ elapsedTIME("report","SYS") = TIMEelapsed;
 elapsedTIME("report","Input parameters") = TIMEelapsed;
 
 *============================================================================================
-* 6.3 Reporting (dummy reporting)
+* 7.3 Reporting (dummy reporting)
 *============================================================================================
 
 *       Dummy flow out 
@@ -704,7 +707,7 @@ elapsedTIME("report","Dummies") = TIMEelapsed;
 
 
 *============================================================================================
-* 6.4 Reporting (loop sector reporting)
+* 7.4 Reporting (loop sector reporting)
 *============================================================================================
 
 *Only include sectors that are part of the times solution
@@ -1030,7 +1033,7 @@ countprc("count",sector)     = card(tmp_prc);
 
 
 *============================================================================================
-* 7 Test section: Sum check to confirm that TIMES report includes all data (f_in and f_out)
+* 8 Test section: Sum check to confirm that TIMES report includes all data (f_in and f_out)
 *===========================================================================================
 * This section performs sum-check on F_IN and F_out form the raw TIMES gdx output file and the TIMESreport parameter
 
@@ -1051,10 +1054,10 @@ display SumCheck_;
 execute$(sum((attr,milestonyr,com,prc),ABS(SumCheck_(attr,milestonyr,com,prc))) > tolerance) 'msg "%username%" /time:0 Aborted due to difference between data in TIMES gdx and TIMES report script: & /UIzCheck/' ;
 ABORT$(sum((attr,milestonyr,com,prc),ABS(SumCheck_(attr,milestonyr,com,prc))) > tolerance) "ERROR: Aborted due to difference between data in TIMES gdx and TIMES report script";
 
-elapsedTIME("post","07TestResults") = TIMEelapsed;
+elapsedTIME("post","08TestResults") = TIMEelapsed;
 
 *============================================================================================
-* 8 expanding timesreport with additional dimensions
+* 9 expanding timesreport with additional dimensions
 *============================================================================================
 
 TIMESReport_v2(scen,sector,"NA","NA","NA","NA",topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
@@ -1064,22 +1067,22 @@ TIMESReport_v2(scen,sector,"NA","NA","NA","NA",topic,attr,prc,com,all_TS,all_reg
         TIMESReport_v2(scen,sector,subsector,service,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
         TIMESReport_v2(scen,sector,"NA",service,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)$(
             map_prc_subsector(prc,subsector));
-elapsedTIME("post","08ExpandTIMESreport_subsector") = TIMEelapsed;
+elapsedTIME("post","09ExpandTIMESreport_subsector") = TIMEelapsed;
 
         TIMESReport_v2(scen,sector,subsector,service,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
         TIMESReport_v2(scen,sector,subsector,"NA"  ,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)$(
             map_prc_service(prc,service));
-elapsedTIME("post","08ExpandTIMESreport_service") = TIMEelapsed;
+elapsedTIME("post","09ExpandTIMESreport_service") = TIMEelapsed;
 
         TIMESReport_v2(scen,sector,subsector,service,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
         TIMESReport_v2(scen,sector,subsector,service,"NA"    ,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)$(
             map_prc_techgroup(prc,techgroup));
-elapsedTIME("post","08ExpandTIMESreport_techgroup") = TIMEelapsed;
+elapsedTIME("post","09ExpandTIMESreport_techgroup") = TIMEelapsed;
 
         TIMESReport_v2(scen,sector,subsector,service,techgroup,comgroup,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)=
         TIMESReport_v2(scen,sector,subsector,service,techgroup,"NA"   ,topic,attr,prc,com,all_TS,all_reg,all_regT,milestonyr,vntg,unit,cur)$(
                 map_com_comgroup(com,comgroup));
-elapsedTIME("post","08ExpandTIMESreport_comgroup") = TIMEelapsed;
+elapsedTIME("post","09ExpandTIMESreport_comgroup") = TIMEelapsed;
 
 
 *=== Write a test to check if the number of records in TIMESReport and TIMESReport_vs are the same
@@ -1106,7 +1109,7 @@ diff_percent$(count_TIMESReport_original > 0) = 100 * (count_TIMESReport_expande
 DISPLAY$(count_TIMESReport_original <> count_TIMESReport_expanded) diff_percent;
 
 *============================================================================================
-* 9 Write reporting to gdx and csv
+* 10 Write reporting to gdx and csv
 *============================================================================================
 
 *Write timesreport gdx-file including set definitions
@@ -1115,7 +1118,7 @@ DISPLAY$(count_TIMESReport_original <> count_TIMESReport_expanded) diff_percent;
 *Write timesreport gdx-file including set definitions
 execute_unload '%pathTIMESmodel%\timesreport\GDX\%TIMESscenario%_TIMESreport.gdx'  TIMESReport_v2 = timesreport, scen_desc, sector = sector_desc, subsector = subsector_desc,techgroup = techgroup_desc, service = service_desc, comgroup = comgroup_desc, topic = topic_desc , attr = attr_desc, prc_desc, com_desc, G_YRFR = all_ts_data,all_reg, milestonyr = year,vntg, elapsedTIME,countprc, map_prc_sector, map_prc_subsector, map_prc_techgroup, map_prc_service, map_com_comgroup;
 
-elapsedTIME("post","9gdxwrite") = TIMEelapsed;
+elapsedTIME("post","10gdxwrite") = TIMEelapsed;
 
 *Merge existing gdx-files and create csv-file
 execute '%pathTIMESmodel%\TIMESreport\bat-scripts\runMerge_GDX2CSV_TIMESreports.bat';
