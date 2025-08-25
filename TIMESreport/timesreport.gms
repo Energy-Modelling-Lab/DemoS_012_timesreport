@@ -177,11 +177,12 @@ SETS
         prc_map(reg,prc_grp,prc)  "Connection between process groups and processes in model"
         top(reg,prc,com,in_out)   "Topology showing whether commodities are in_out of different processes in model"
         inv                       "TIMES investment marker"           / INV /
-        milestonyr                "Projection years for which model to be run"
         ncapr_items               "Levcost identifiers"               /LEVCOST/
         var_obj_items(attr)       "Objective function identifiers"    /OBJSAL,OBJFIX,OBJINV,OBJVAR,OBJDAM/
         eohyears                  "Each year from 1st NCAP_PASTI to last milestonyr"
         allyear                   "All modelling year 1980-2200"
+        milestonyr(allyear)       "Projection years for which model is run"
+        miyr_l(allyear)           "End of modelling horizont"
         periodyr                  "Map between milestone year and all years"
         top_ire(all_reg,com,all_reg,com,prc)                   "Trade within area of study"
         prc_gmap(all_reg,prc,*)   "List of additional VEDA process group mappings used for reporting"
@@ -213,7 +214,8 @@ ALIAS(cur,curr);
 * Load basic sets from TIMES at compilation time
 $onUndf
 $gdxin "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx"
-$load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top milestonyr periodyr eohyears allyear top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
+$load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top periodyr eohyears allyear milestonyr miyr_l top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
+
 * Check if TIMESreport sets exists and load if found
 $if gdxSetType sectorTIMESreport $loadM sector = sectorTIMESreport
 $if gdxSetType subsectorTIMESreport $loadM subsector = subsectorTIMESreport
@@ -225,7 +227,7 @@ $gdxin
 ;
 
 alias(units,unit);
-elapsedTIME("ante","03setTIMESsolution") = TIMEelapsed;
+elapsedTIME("ante","02setTIMESsolution") = TIMEelapsed;
 *============================================================================================
 * 4 Define sets an parameters to import times solution
 *============================================================================================
@@ -239,8 +241,12 @@ SETS
         item                    "Var_cap information"
                                 /       '0'     "Residual capacity"
                                         '¤'     "Retired capacity"
-                                        '-'     "New capacity"/;
+                                        '-'     "New capacity"/
+        annual_ts(all_ts)       /"annual"   "annual timeslice level"/
+        EOHplus1(allyear)       "Define end of model horizont plus for year (used to assigne undiscounted salvage cost)";
 
+* Define end of model horizont plus for year (used to assigne undiscounted salvage cost)
+EOHplus1(allyear) = miyr_l(allyear-1);
 
 *Add elements to set (we make sure all sets include NA)
 *Add feature to leave dimension blank, i.e. "NA", when information is not available.
@@ -262,7 +268,7 @@ set     vntg         / "NA" "not available"/;
 $offMulti
 
 * Define years based on milestone model years in TIMES default
-alias(milestonyr,year);
+alias(allyear,year);
 
 * Loopyears (relevant when linking with external model)
         loopyears(milestonyr) = YES;
@@ -278,6 +284,9 @@ PARAMETER
 *Length of each period milestonyr
         periodlength(milestonyr)                           "Length of each period milestonyr"
 	
+* Discounting factor
+	obj_disc(all_reg,allyear,cur)                   "TIMES general discounting factor"
+
 *Total discounted system cost: variable representing objective function by region and main type (OBJINV, OBJFIX, OBJVAR, OBJSAL)
         VAR_OBJ_L(all_reg,var_obj_items,cur)               "TIMES objective value"
 
@@ -313,8 +322,8 @@ PARAMETER
         cst_actc(all_reg,vntg,milestonyr,prcT,*)           "Annual commodity damage cost"
 
 *Salvage value of investment cost, taxes and subsidies of process (p) with vintage period (v), for which the
-*technical lifetime exceeds the end of the model horizon, value at year EOH+1.	
-        cst_salv(all_reg,milestonyr,prcT)                  "Salvage values of capacities at EOH+1"
+*technical lifetime exceeds the end of the model horizon, discounted value in G_DYEAR of salavge cost in EOH+1.	
+        cst_salv(all_reg,vntg,prcT)                  "Salvage values of capacities at EOH+1"
 
 *Annual undiscounted fixed operating and maintenance costs (caused by NCAP_FOM) in period (t)
 *associated with the installed capacity of process (p) with vintage period (v).	
@@ -402,7 +411,7 @@ PARAMETER
 *============================================================================================
 * 4.1 Load results from TIMES default and do initial corrections to reduces size of data (execution time)
 *============================================================================================
-execute_load  "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx" cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,         prc_actunt, var_comnet_level=var_comnet.l, var_act_level = var_act.l, g_dyear,yearval, periodlength = d;
+execute_load  "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx" cst_actc, cst_floc, cst_flox, cst_comx, cst_dam,cst_comc, cst_fixc, cst_fixx, cst_invc,cst_decc,cst_invx, F_in, F_out, par_COMBALem,cap_new, com_proj, par_ncapr, val_flo, var_ncap=var_ncap.l, var_cap = var_cap.l, par_pasti, par_capl, ire_price, coef_af, obj_disc, VAR_OBJ_L=VAR_OBJ.l, G_YRFR,prc_actunt, var_comnet_level=var_comnet.l, var_act_level = var_act.l, g_dyear,yearval, periodlength = d, cst_salv;
 
 * Reset "EPS's" to zero to reduce data size and makes sure that output is always numerical
 cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary)$(cst_actc(all_reg,vntg,milestonyr,prcT,auxiliary) eq EPS)                    = 0;
@@ -426,13 +435,14 @@ var_cap(RegT,milestonyr,prcT)$(var_cap(RegT,milestonyr,prcT)    eq EPS)         
 var_comnet_level(all_reg,milestonyr,com,all_TS)$(var_comnet_level(all_reg,milestonyr,com,all_TS) eq EPS)                      = 0;
 var_act_level(all_reg,vntg,milestonyr,prcT,all_TS)$(var_act_level(all_reg,vntg,milestonyr,prcT,all_TS) eq EPS)                = 0;
 par_pasti(all_reg,milestonyr,prcT,"0")$(par_pasti(all_reg,milestonyr,prcT,"0") eq EPS)                                        = 0;
-par_pasti(all_reg,milestonyr,prcT,"¤")$(par_pasti(all_reg,milestonyr,prcT,"¤") eq EPS)                                      = 0;
+par_pasti(all_reg,milestonyr,prcT,"¤")$(par_pasti(all_reg,milestonyr,prcT,"¤") eq EPS)                                        = 0;
 par_capl(all_reg,milestonyr,prcT)$(par_capl(all_reg,milestonyr,prcT) eq EPS)                                                  = 0;
 ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur)$(ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur) eq EPS)    = 0;
 val_flo(all_reg,vntg,milestonyr,prcT,com)$(val_flo(all_reg,vntg,milestonyr,prcT,com) eq EPS)                                  = 0;
 coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd)$(coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd) eq EPS)                    = 0;
+cst_salv(all_reg,vntg,prcT)$(cst_salv(all_reg,vntg,prcT) eq EPS)                                                  = 0;  
 
-elapsedTIME("ante","04importTIMESresults") = TIMEelapsed;
+elapsedTIME("ante","03importTIMESresults") = TIMEelapsed;
 
 *============================================================================================;
 * 5 Basic check for dummies in model
@@ -455,14 +465,16 @@ prcDMZ('IMPMATZ') = YES;
 prcDMZ('IMPDUCZ') = YES;
 
 
+
 * clean-up previous times dummies file if file exist
-$call 'del %pathTIMESmodel%TIMESreport\GDX\*_TimesDummies.gdx*'
+$call 'del %pathTIMESmodel%TIMESreport\tempData\%TIMESscenario%_TimesDummies.gdx'
 
 *Defining timesDummies parameter to extract which dummies are present in model
-timesDummies("f_in",all_reg,vntg,year,prcDMZ,comT,all_TS) =    F_in(all_reg,vntg,year,prcDMZ,comT,all_TS);
-timesDummies("f_out",all_reg,vntg,year,prcDMZ,comT,all_TS) =    F_out(all_reg,vntg,year,prcDMZ,comT,all_TS);
+timesDummies("f_in",all_reg,vntg,milestonyr,prcDMZ,comT,all_TS) =    F_in(all_reg,vntg,milestonyr,prcDMZ,comT,all_TS);
+timesDummies("f_out",all_reg,vntg,milestonyr,prcDMZ,comT,all_TS) =    F_out(all_reg,vntg,milestonyr,prcDMZ,comT,all_TS);
 * Defining timesDummiesFlag, which is a parameter that flags out which years are affected by dummies - And also where they are affected the most.
-timesDummiesFlag(year) = sum((attr,all_reg,vntg,prcDMZ,comT,all_TS), timesDummies(attr,all_reg,vntg,year,prcDMZ,comT,all_TS));
+timesDummiesFlag(milestonyr) = sum((attr,all_reg,vntg,prcDMZ,comT,all_TS), timesDummies(attr,all_reg,vntg,milestonyr,prcDMZ,comT,all_TS));
+
 
 * Creating if-statement that creates a massage for the user - to see that dummies are present, these are also displayed in the lst-file running the current gms-file.
         IF(sum(year, timesDummiesFlag(year)) gt  0,
@@ -599,7 +611,7 @@ IF(YES$card(TESTcomgroup),
     execute 'msg "%username%" /time:0 "ERROR: Some commodity  are mapped to multiple commodities groups. For detailed information see:  %pathTIMESmodel%TIMESReport\TempData\%TIMESscenario%_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx';);
 
 * clean-up if previous version of  ABORT_DUE_TO_DUPLICATED_SETS.gdx exists
-$call 'del %pathTIMESmodel%TIMESreport\tempData\*_TIMESREPORT_ABORTED_DUE_TO_DUPLICATED_SETS.gdx'
+$call 'del %pathTIMESmodel%TIMESreport\tempData\*_DUPLICATED_SETS.gdx'
 
 * In case of any across the different maps write ABORT_DUE_TO_DUPLICATED_SETS.gdx and Abort TIMESReport
 IF(card(TESTsector) + card(TESTsubsector) + card(TESTservice) + card(TESTtechgroup) + card(TESTcapacityunit) + card(TESTcomgroup) > 0,
@@ -638,10 +650,10 @@ elapsedTIME("ante","06Report") = TIMEelapsed;
 * 7.1 Reporting (energy system level)
 *============================================================================================
 *Reporting objective function at regional and obj_items level using information in yearval and g_dyear to set discount year
-TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(yearval(milestonyr) = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
+TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur)$(allyear.val = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
 
 *We need to correct objsal (salvage cost) )which currently is represented as a positive number, however, we would like to interpret it as a negative number
-TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$(TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,milestonyr,"NA","NA",cur);
+TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur)$(TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur);
 
 
 * Commodity taxes (tracked on energy system level to avoid double counting)
@@ -966,6 +978,12 @@ LOOP(sector$ReportInclude(sector),
                                                                                                                   and cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV") lt 0)
         = cst_decc(tmp_reg,vntg,milestonyr,tmp_prc)$(
          g_rcur(tmp_reg,cur));
+         
+*       Salvage costs 
+        TIMESReport(scen,sector,"acosts","salv" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,EOHplus1,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
+                                                                                                                    and cst_salv(tmp_reg,vntg,tmp_prc)
+	                                                                                                            and obj_disc(tmp_reg,EOHplus1,cur))
+        = -cst_salv(tmp_reg,vntg,tmp_prc) / obj_disc(tmp_reg,EOHplus1,cur);
 
 *elapsedTIME("report","acosts") = TIMEelapsed;
 
