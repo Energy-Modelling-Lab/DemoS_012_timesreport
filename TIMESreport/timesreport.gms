@@ -142,7 +142,7 @@ elapsedTIME("ante","01setTIMESreport") = TIMEelapsed;
 *============================================================================================
 * We add information on scenario description to a scalar to store it in the GDX file (this should be improved on way or the other)
 ** First information on scenario name and model description is taken from vtrun file
-$call grep "Title" "%pathGAMS_WrkTIMES_Model%\vtrun.cmd" >  %GAMS_WrkTIMES_Modelmodel%\TIMESreport\tempData\title.txt"
+$call grep "Title" "%pathGAMS_WrkTIMES_Model%\vtrun.cmd" >  "%pathTIMESmodel%\TIMESreport\tempData\title.txt"
 
 ** Second we run a bat file which dynamically generates a gms files
 $call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
