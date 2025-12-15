@@ -1,1 +1,36 @@
-{"InitialSetupComplete":true,"VRQSettings":{"ExpectedMemory":"4","MaxHitWaitTime":"2","Model":"DemoS_012","Priority":"10"},"GAMSFoldersListAndDefaults":{"PathGAMSRoot":"C:\\Veda","WorkTimes":"GAMS_WrkTIMES","SourceTimes":"GAMS_SrcTIMES.v4.8.6","ListOfSourceTimesFolder":["GAMS_SrcTIMES.v4.8.7","GAMS_SrcTIMES.v4.8.6","GAMS_SrcTIMES.v4.8.5","GAMS_SrcTIMES.v4.8.3","GAMS_SrcTIMES.v4.8.1","GAMS_SrcTIMES.v4.8.0","GAMS_SrcTIMES.v4.7.9","GAMS_SrcTIMES.v4.7.8","GAMS_SrcTIMES.v4.7.6","GAMS_SrcTIMES.v4.7.4"],"ListOfWorkTimesFolder":["GAMS_WrkTIMES"]},"RmFormSettings":{"IsDDWritingOnly":false,"IsRestartOption":false,"IsVRQ":false,"MaxRun":"8","Solver":"CPLEX","SolverOption":"BA121-7","StudyName":"pilot_runs","IsGamsEngine":false,"RemoveVdFiles":false,"DoNotCreateCaseZipFile":true,"GenerateJacobian":false},"RmCaseZipFilesStorage":{"CaseZipFilesRootPath":"C:\\Veda\\Veda_case_zip_files"}}
+{
+  "InitialSetupComplete": true,
+  "VRQSettings": {
+    "ExpectedMemory": "4",
+    "MaxHitWaitTime": "2",
+    "Model": "DemoS_012",
+    "Priority": "10"
+  },
+  "GAMSFoldersListAndDefaults": {
+    "PathGAMSRoot": "C:\\Veda",
+    "WorkTimes": "GAMS_WrkTIMES",
+    "SourceTimes": "GAMS_SrcTIMES.v4.8.8",
+    "ListOfSourceTimesFolder": [
+      "GAMS_SrcTIMES.v4.8.8",
+      "GAMS_SrcTIMES.v4.9.0"
+    ],
+    "ListOfWorkTimesFolder": [
+      "GAMS_WrkTIMES"
+    ]
+  },
+  "RmFormSettings": {
+    "IsDDWritingOnly": false,
+    "IsRestartOption": false,
+    "MaxRun": "8",
+    "Solver": "CPLEX",
+    "SolverOption": "BA121-7",
+    "StudyName": "pilot_runs",
+    "IsGamsEngine": false,
+    "RemoveVdFiles": false,
+    "DoNotCreateCaseZipFile": true,
+    "GenerateJacobian": false
+  },
+  "RmCaseZipFilesStorage": {
+    "CaseZipFilesRootPath": "C:\\Veda\\Veda_case_zip_files"
+  }
+}

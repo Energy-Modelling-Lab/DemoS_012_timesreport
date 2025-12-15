@@ -1,1 +1,380 @@
-[{"CaseId":40,"CreatedOn":"2020-06-02 09:01","Description":"Demo Step 012 TRADSL Tax","EditedOn":"2025-05-21 16:23","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":null,"GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.8.6","Name":"DemoS_012a","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012a","ScenarioGroupId":127,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"},{"CaseId":39,"CreatedOn":"2020-06-02 09:46","Description":"Demo Step 012 NUC Lumpy Investment","EditedOn":"2020-07-16 05:38","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":"","GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.7.4","Name":"DemoS_012e","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012e","ScenarioGroupId":131,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"},{"CaseId":35,"CreatedOn":"2020-06-02 09:41","Description":"Demo Step 012 Solar Subsidies","EditedOn":"2025-05-19 13:20","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":"","GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.7.4","Name":"DemoS_012c","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012c","ScenarioGroupId":129,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"},{"CaseId":38,"CreatedOn":"2020-06-02 09:40","Description":"Demo Step 012 CO2 Tax","EditedOn":"2025-04-07 14:07","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":"","GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.7.4","Name":"DemoS_012b","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012b","ScenarioGroupId":128,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"},{"CaseId":37,"CreatedOn":"2020-06-02 09:40","Description":"Demo Step 012","EditedOn":"2025-03-25 12:41","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":null,"GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.7.4","Name":"DemoS_012","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012","ScenarioGroupId":126,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"},{"CaseId":36,"CreatedOn":"2020-06-02 09:46","Description":"Demo Step 012 CO2 bound across Regions","EditedOn":"2020-07-17 09:07","EndingYear":"2050","FixResultFileName":"False","FixResultInfo":{"WorkTimesFolderPath":"","GdxElasticDermands":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false},"GdxIre":{"GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"GdxUseSolution":{"FixYearsUpto":"","GdxSelectedFile":{"FileName":"","FilePath":"","IsSelected":false},"IsApplied":false,"RadioSelection":1},"IsApplyFixResult":false},"GAMSSourceFolder":"GAMS_SrcTIMES.v4.7.4","Name":"DemoS_012d","ParametricGroup":null,"ParametricGroupId":null,"PeriodsDefinition":"pdef-11","PropertiesGroup":"DefaultProperties","PropertiesGroupId":125,"RegionGroup":"AllRegion","RegionGroupId":124,"ScenarioGroup":"DemoS_012d","ScenarioGroupId":130,"Solver":"cplex","SolverOptionFile":"BA121-7","UserName":"krist"}]
+[
+  {
+    "CaseId": 196,
+    "CreatedOn": "2020-06-02 09:40",
+    "Description": "Demo Step 012",
+    "EditedOn": "2025-12-15 14:07",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": null,
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012",
+    "ScenarioGroupId": 237,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 203,
+    "CreatedOn": "2025-12-15 14:11",
+    "Description": "Demo Step 012 (remove scenario-file causing dummies)",
+    "EditedOn": "2025-12-15 14:13",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": null,
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012_RemoveDummy",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012-RemoveDummyScenFile",
+    "ScenarioGroupId": 244,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 197,
+    "CreatedOn": "2020-06-02 09:01",
+    "Description": "Demo Step 012 TRADSL Tax",
+    "EditedOn": "2025-12-15 14:09",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": null,
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012a",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012a",
+    "ScenarioGroupId": 238,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 198,
+    "CreatedOn": "2020-06-02 09:40",
+    "Description": "Demo Step 012 CO2 Tax",
+    "EditedOn": "2025-04-07 14:07",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": "",
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012b",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012b",
+    "ScenarioGroupId": 239,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 199,
+    "CreatedOn": "2020-06-02 09:41",
+    "Description": "Demo Step 012 Solar Subsidies",
+    "EditedOn": "2025-05-19 13:20",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": "",
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012c",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012c",
+    "ScenarioGroupId": 240,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 200,
+    "CreatedOn": "2020-06-02 09:46",
+    "Description": "Demo Step 012 CO2 bound across Regions",
+    "EditedOn": "2020-07-17 09:07",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": "",
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012d",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012d",
+    "ScenarioGroupId": 241,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  },
+  {
+    "CaseId": 201,
+    "CreatedOn": "2020-06-02 09:46",
+    "Description": "Demo Step 012 NUC Lumpy Investment",
+    "EditedOn": "2020-07-16 05:38",
+    "EndingYear": "2050",
+    "FixResultFileName": "False",
+    "FixResultInfo": {
+      "WorkTimesFolderPath": "",
+      "GdxElasticDermands": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false
+      },
+      "GdxIre": {
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "GdxUseSolution": {
+        "FixYearsUpto": "",
+        "GdxSelectedFile": {
+          "FileName": "",
+          "FilePath": "",
+          "IsSelected": false
+        },
+        "IsApplied": false,
+        "RadioSelection": 1
+      },
+      "IsApplyFixResult": false
+    },
+    "GAMSSourceFolder": "GAMS_SrcTIMES.v4.8.8",
+    "Name": "DemoS_012e",
+    "ParametricGroup": null,
+    "ParametricGroupId": null,
+    "PeriodsDefinition": "pdef-11",
+    "PropertiesGroup": "DefaultProperties",
+    "PropertiesGroupId": 236,
+    "RegionGroup": "AllRegion",
+    "RegionGroupId": 235,
+    "ScenarioGroup": "DemoS_012e",
+    "ScenarioGroupId": 242,
+    "Solver": "cplex",
+    "SolverOptionFile": "BA121-7",
+    "UserName": "krist",
+    "ModelFramework": "Times"
+  }
+]
