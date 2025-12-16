@@ -14,9 +14,9 @@ $title   TIMESreport (timesreport.gms) - Collects all relevant data from TIMES i
 $ontext
 *==== Purpose this scripts collect all TIMES model data and writes it into a pivot ready format using parameter with the following dimension
 *
-*                           scenario                                                      attribute commodity     region from        vintage  currency
-*                              |                                                               |       \       |      |                /         /
-* PARAMETER       TIMESReport(scen,,sector,subsector,service,techgroup,comgroup,sector,topic,attr,prc,com,all_TS,regFrom,RegTo,year,vntg,unit,cur) "Advanced TIMES reporting parameter";
+*                           scenario                                                      attribute commodity     region from                currency
+*                              |                                                               |       \       |      |                           /
+* PARAMETER       TIMESReport(scen,,sector,subsector,service,techgroup,comgroup,sector,topic,attr,prc,com,all_TS,regfrom,regto,year,vintage,unit,cur) "Advanced TIMES reporting parameter";
 *                                                                                                  |         |             |               
 *                                                                                                proces    timeslice     region to        
 *                                 
@@ -53,7 +53,7 @@ $SETGLOBAL  standalone      "yes"
 $SETGLOBAL  modelname       "DemoS_012_timesreport"
 
 * Set scenario name of TIMES scenario when script is run locally (the scenario name is defined automatically when runing TIMESreport from VEDA)
-$IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012
+$IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012a
 
 * Set GAMS_wrkTIMES library (Adjust to adhere to local TIMES/VEDA installation) 
 $SETGLOBAL GAMS_wrkTIMES "c:\VEDA\GAMS_WrkTIMES"
@@ -180,8 +180,9 @@ SETS
         ncapr_items               "Levcost identifiers"               /LEVCOST/
         var_obj_items(attr)       "Objective function identifiers"    /OBJSAL,OBJFIX,OBJINV,OBJVAR,OBJDAM/
         eohyears                  "Each year from 1st NCAP_PASTI to last milestonyr"
-        allyear                   "All modelling year 1980-2200"
-        milestonyr(allyear)       "Projection years for which model is run"
+        allyear                   "All modelling year  1960-2200"
+        vntg(allyear)             "All modelling years 1980-2200"
+	milestonyr(allyear)       "Projection years for which model is run"
         miyr_l(allyear)           "End of modelling horizont"
         periodyr                  "Map between milestone year and all years"
         top_ire(all_reg,com,all_reg,com,prc)                   "Trade within area of study"
@@ -207,6 +208,7 @@ ALIAS(reg,regT);
 ALIAS(all_reg,all_regT,regto,regfrom);
 ALIAS(all_ts,ts);
 ALIAS(cur,curr);
+ALIAS(vntg,vintage);
 
 *============================================================================================
 * 3.1 Import set definition from TIMES default model run (note this is a precondition for importing results)
@@ -214,7 +216,7 @@ ALIAS(cur,curr);
 * Load basic sets from TIMES at compilation time
 $onUndf
 $gdxin "%pathGAMS_WrkTIMES_Model%\GamsSave\%TIMESscenario%.gdx"
-$load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top periodyr eohyears allyear milestonyr miyr_l top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
+$load  prc prc_desc prc_grp com com_desc com_grp all_reg reg all_TS com_TS prc_Map top periodyr eohyears allyear vntg = allyear  milestonyr miyr_l top_ire ie=impexp prc_gmap com_gmap units units_com units_act units_cap units_mony com_unit cur g_rcur
 
 * Check if TIMESreport sets exists and load if found
 $if gdxSetType sectorTIMESreport $loadM sector = sectorTIMESreport
@@ -232,9 +234,6 @@ elapsedTIME("ante","02setTIMESsolution") = TIMEelapsed;
 * 4 Define sets an parameters to import times solution
 *============================================================================================
 SETS
-*        year(milestonyr)        "year relevant for linking iterating with cge"
-        loopyears(milestonyr)   "year relevant for linking iterating with cge"
-        vntg                    "Vintage"                               /1980*2100/
         newcap                  "New capacitiy dimensions"              /INSTCAP, LUMPINV, LUMPIX, INVX+, INV+/
         bd                      "Bound in GAMS"                         /UP, LO, FX, L/
         auxiliary               "Auxiliary set, used if dim is empty"   /'-'/
@@ -244,6 +243,9 @@ SETS
                                         '-'     "New capacity"/
         annual_ts(all_ts)       /"annual"   "annual timeslice level"/
         EOHplus1(allyear)       "Define end of model horizont plus for year (used to assigne undiscounted salvage cost)";
+
+
+
 
 * Define end of model horizont plus for year (used to assigne undiscounted salvage cost)
 EOHplus1(allyear) = miyr_l(allyear-1);
@@ -268,7 +270,7 @@ SET     prc          / "NA" "not available",
 		       IMPMATZ "Dummy material",
 		       IMPDUCZ "Dumnmy constraint"/;
 SET     com          / "NA" "not available"/;
-SET     vntg         / "NA" "not available"/;
+*SET     vntg         / "NA" "not available"/;
 $offMulti
 
 
@@ -276,7 +278,7 @@ $offMulti
 alias(allyear,year);
 
 * Loopyears (relevant when linking with external model)
-        loopyears(milestonyr) = YES;
+*        loopyears(milestonyr) = YES;
 
 
 SCALAR  timesErrorLevel         "TIMES error level from GAMS execution"           / 0 /
@@ -355,8 +357,7 @@ PARAMETER
 	cap_new(all_reg,vntg,prcT,milestonyr,newcap)       "TIMES lump sum investment, costs and subsidies"
 
 *Alot of information regarding technology investment, but is mainly used for its levelized cost. Is given by region (r), modelled period (t), specific process (p) and additional indicators, where the LEVCOST is of specific interest here, and the only one taken out.
-        par_ncapr(all_reg, milestonyr, prcT, ncapr_items)  "TIMES levelised cost of energy"
-        par_ncapr_(all_reg, milestonyr, prcT)              "TIMES levelised cost of energy, only levcost"
+        par_ncapr(all_reg, vntg, prcT, ncapr_items)  "TIMES levelised cost of energy"
 
 *Undiscounted annual shadow price of commodity balance (EQE_COMBAL) being a strict equality. The
 *marginal value describes the cost increase in the objective function, if the difference between production
@@ -434,7 +435,7 @@ F_out(all_reg,vntg,milestonyr,prcT,comT,all_TS)$(F_out(all_reg,vntg,milestonyr,p
 par_CombalEm(all_reg,milestonyr,com,all_TS)$(par_CombalEm(all_reg,milestonyr,com,all_TS) eq EPS)                              = 0;
 cap_new(all_reg,vntg,prcT,milestonyr,newcap)$(cap_new(all_reg,vntg,prcT,milestonyr,newcap) eq EPS)                            = 0;
 com_proj(all_reg,milestonyr,com)$(com_proj(all_reg,milestonyr,com) eq EPS)                                                    = 0;
-par_ncapr(all_reg, milestonyr, prcT, ncapr_items)$(par_ncapr(all_reg, milestonyr, prcT, ncapr_items) eq EPS)                  = 0;
+par_ncapr(all_reg, vntg, prcT, ncapr_items)$(par_ncapr(all_reg, vntg, prcT, ncapr_items) eq EPS)                              = 0;
 var_ncap(all_reg,milestonyr,prcT)$(var_ncap(all_reg,milestonyr,prcT)  eq EPS)                                                 = 0;
 var_cap(RegT,milestonyr,prcT)$(var_cap(RegT,milestonyr,prcT)    eq EPS)                                                       = 0;
 var_comnet_level(all_reg,milestonyr,com,all_TS)$(var_comnet_level(all_reg,milestonyr,com,all_TS) eq EPS)                      = 0;
@@ -445,7 +446,7 @@ par_capl(all_reg,milestonyr,prcT)$(par_capl(all_reg,milestonyr,prcT) eq EPS)    
 ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur)$(ire_price(all_reg,milestonyr,prcT,com,all_TS,reg,ie,cur) eq EPS)    = 0;
 val_flo(all_reg,vntg,milestonyr,prcT,com)$(val_flo(all_reg,vntg,milestonyr,prcT,com) eq EPS)                                  = 0;
 coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd)$(coef_af(all_reg,vntg,milestonyr, prcT,all_TS,bd) eq EPS)                    = 0;
-cst_salv(all_reg,vntg,prcT)$(cst_salv(all_reg,vntg,prcT) eq EPS)                                                  = 0;  
+cst_salv(all_reg,vntg,prcT)$(cst_salv(all_reg,vntg,prcT) eq EPS)                                                              = 0;  
 
 elapsedTIME("ante","03importTIMESresults") = TIMEelapsed;
 
@@ -653,36 +654,35 @@ elapsedTIME("ante","06Report") = TIMEelapsed;
 * 7.1 Reporting (energy system level)
 *============================================================================================
 *Reporting objective function at regional and obj_items level using information in yearval and g_dyear to set discount year
-TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur)$(allyear.val = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
+TIMESReport(scen,"SYS","dcosts",var_obj_items,"NA","NA","annual",all_reg,all_reg,allyear,"0","NA",cur)$(allyear.val = g_dyear) = VAR_OBJ_L(all_reg,var_obj_items,cur);
 
 *We need to correct objsal (salvage cost) )which currently is represented as a positive number, however, we would like to interpret it as a negative number
-TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur)$(TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"NA","NA",cur);
-
+TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"0","NA",cur)$(TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"0","NA",cur) > 0) = -1 * TIMESReport(scen,"SYS","dcosts","objsal","NA","NA","annual",all_reg,all_reg,allyear,"0","NA",cur);
 
 * Commodity taxes (tracked on energy system level to avoid double counting)
-TIMESReport(scen,"SYS","acosts","comx","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$ 
+TIMESReport(scen,"SYS","acosts","comx","NA",com,"annual",all_reg,all_reg,milestonyr,"0","NA",cur)$ 
         (cst_comx(all_reg,milestonyr,com) ge 0)
        = cst_comx(all_reg,milestonyr,com)$(
          g_rcur(all_reg,cur));
 
 * Commodity taxes (reported on system level since process information is not attached to this parameter)
-TIMESReport(scen,"SYS","acosts","coms","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur)$ 
+TIMESReport(scen,"SYS","acosts","coms","NA",com,"annual",all_reg,all_reg,milestonyr,"0","NA",cur)$ 
         (cst_comx(all_reg,milestonyr,com) lt 0)
        = cst_comx(all_reg,milestonyr,com)$(
          g_rcur(all_reg,cur));
  
 * Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
-TIMESReport(scen,"SYS","acosts","comd","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur) 
+TIMESReport(scen,"SYS","acosts","comd","NA",com,"annual",all_reg,all_reg,milestonyr,"0","NA",cur) 
        = cst_dam(all_reg,milestonyr,com)$(
          g_rcur(all_reg,cur));
 
 * Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
-TIMESReport(scen,"SYS","acosts","comc","NA",com,"annual",all_reg,all_reg,milestonyr,"NA","NA",cur) 
+TIMESReport(scen,"SYS","acosts","comc","NA",com,"annual",all_reg,all_reg,milestonyr,"0","NA",cur) 
        = cst_comc(all_reg,milestonyr,com)$(
          g_rcur(all_reg,cur));
 
 * Annual undiscounted commodity related damage costs (reported on system level since process information is not attached to this parameter)
-TIMESReport(scen,"SYS","emission","comnet","NA",comENV,all_TS,all_reg,all_reg,milestonyr,"NA",unit,"NA") 
+TIMESReport(scen,"SYS","emission","comnet","NA",comENV,all_TS,all_reg,all_reg,milestonyr,"0",unit,"NA") 
        = var_comnet_level(all_reg,milestonyr,comENV,all_TS)$(
          com_unit(all_reg,comENV,unit));
 
@@ -693,12 +693,12 @@ elapsedTIME("report","SYS") = TIMEelapsed;
 *============================================================================================
 
 *       import price assumptions
-        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,"IMPEXP",all_reg,milestonyr,"NA",unit, cur)
+        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,"IMPEXP",all_reg,milestonyr,"0",unit, cur)
         = ire_price(all_reg,milestonyr,prc,com,all_TS,all_reg,"IMP",cur)$(
          com_unit(all_reg,com,unit));
 
 *       export price assumptions
-        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,all_reg,"IMPEXP",milestonyr,"NA",unit, cur)
+        TIMESReport(scen,"SYS","inputpar","mpri",prc,com,all_TS,all_reg,"IMPEXP",milestonyr,"0",unit, cur)
         = ire_price(all_reg,milestonyr,prc,com,all_TS,all_reg,"EXP",cur)$(
          com_unit(all_reg,com,unit));
          
@@ -851,19 +851,19 @@ LOOP(sector$ReportInclude(sector),
 *elapsedTIME("report","f_in_out") = TIMEelapsed;
 
 *       Marginal time-slice price of commodity input (only relevant for commodities on ts level)
-        TIMESReport(scen,sector,"prices","mpri","NA",tmp_comNRGin,all_ts,tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(not par_combalem(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
+        TIMESReport(scen,sector,"prices","mpri","NA",tmp_comNRGin,all_ts,tmp_reg,tmp_reg,milestonyr,"0",unit,cur)$(not par_combalem(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
          = par_combalem(tmp_reg,milestonyr,tmp_comNRGin,all_ts)$(
             com_unit(tmp_reg,tmp_comNRGin,unit)
             and g_rcur(tmp_reg,cur));;
 
 *= Annual price of commodity input (commmodity on annual level)
-         TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur) =
+         TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"0",unit,cur) =
                     par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,"annual")$(
              com_unit(tmp_reg,tmp_comNRGin,unit)
              and g_rcur(tmp_reg,cur));
 
 *= Annual price of commodity (commmodity on ts level - calculated weighted by using G_YRFR)
-        TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(not par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
+        TIMESReport(scen,sector,"prices","apri" ,"NA",tmp_comNRGin,"annual",tmp_reg,tmp_reg,milestonyr,"0",unit,cur)$(not par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,"annual"))
         = sum(all_TS,  par_CombalEm(tmp_reg,milestonyr,tmp_comNRGin,all_TS) * G_YRFR(tmp_reg, all_TS))$(
             com_unit(tmp_reg,tmp_comNRGin,unit)
             and g_rcur(tmp_reg,cur));
@@ -1018,28 +1018,28 @@ LOOP(sector$ReportInclude(sector),
             prc_actunt(tmp_reg,tmp_prc,tmp_comNRGout,unit));
 	    
 *       Residual capacity 
-        TIMESReport(scen,sector,"capacity","ecap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+        TIMESReport(scen,sector,"capacity","ecap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"0",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
          =  (par_pasti(tmp_reg,milestonyr,tmp_prc,"0"))$(
              map_prc_capacityunit(tmp_prc,units_cap));
 
 *       Retired capacity    
-        TIMESReport(scen,sector,"capacity","rcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+        TIMESReport(scen,sector,"capacity","rcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"0",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
          =  (par_pasti(tmp_reg,milestonyr,tmp_prc,"¤"))$ (
              map_prc_capacityunit(tmp_prc,units_cap));
     
 *       New capacity
-        TIMESReport(scen,sector,"capacity","ncap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+        TIMESReport(scen,sector,"capacity","ncap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"0",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
         = par_capl(tmp_reg,milestonyr,tmp_prc)$(
           map_prc_capacityunit(tmp_prc,units_cap));
 
 *       Total capacity
-        TIMESReport(scen,sector,"capacity","tcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"NA",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
+        TIMESReport(scen,sector,"capacity","tcap" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,"0",units_cap,"NA")$(prc_desc(tmp_reg,tmp_prc))
          =  (par_capl(tmp_reg,milestonyr,tmp_prc) + par_pasti(tmp_reg,milestonyr,tmp_prc,"0") + par_pasti(tmp_reg,milestonyr,tmp_prc,"¤"))$(
              map_prc_capacityunit(tmp_prc,units_cap));
 
 *       Levelised cost of proces
-        TIMESReport(scen,sector,"capacity","levc" ,tmp_prc,com,"annual",tmp_reg,tmp_reg,milestonyr,"NA",unit,cur)$(prc_desc(tmp_reg,tmp_prc))
-        = par_ncapr(tmp_reg, milestonyr, tmp_prc, "LEVCOST")$(
+        TIMESReport(scen,sector,"capacity","levc" ,tmp_prc,com,"annual",tmp_reg,tmp_reg,vntg,vntg,unit,cur)$(prc_desc(tmp_reg,tmp_prc))
+        = par_ncapr(tmp_reg, vntg, tmp_prc, "LEVCOST")$(
             prc_actunt(tmp_reg,tmp_prc,com,unit)
             and g_rcur(tmp_reg,cur));
 
