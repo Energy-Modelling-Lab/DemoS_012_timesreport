@@ -11,7 +11,7 @@ Energy Modelling Lab \| [kristoffer\@energymodellinglab.com](mailto:kristoffer@e
 
 This software is free and open source. You are free to:
 
-```
+```         
 ✓ Use it for any purpose
 
 ✓ Study and modify the source code
@@ -45,7 +45,9 @@ TIMESreport is a GAMS-based reporting solution designed to address the challenge
 
 The tool operates as a post-processing script that runs automatically after TIMES model execution, transforming the TIMES solution output into a structured, pivot and database ready format suitable for analysis in Excel PivotTables, Power BI, Tableau, Python, R, or as input into a relational databases like DuckDB.
 
-The figure below illustrate the relational format that can be generated based on the tool. The main TIMESreport data is a tidy dataframe consisting of 17 dimensions (the number of dimensions are flexible and can be adjusted to fit the user needs). This main TIMESreport dataframe is augmented by including additional dataframes which includes description for main dimensions in the main TIMESreport dataframe. The labels makes it easy to make elaborate illustration of the data within Excel or any visualization app you may wish to use.
+The figure below illustrate the relational format that can be generated based on the tool. The main TIMESreport data is a tidy dataframe consisting of 19 dimensions (the number of dimensions are flexible and can be adjusted to fit the user needs). This main TIMESreport dataframe is augmented by including additional dataframes which includes description for main dimensions in the main TIMESreport dataframe. The labels makes it easy to make elaborate illustration of the data within Excel or any visualization app you may wish to use.
+
+The next step for the reporting tool is to develop a version that supports stochastic modeling within the TIMES modeling framework. To prepare for this development, the dimension "sow" (state-of-world) has recently been added to the main TIMESreport parameter. By including this additional dimension, the visualization app can be prepared to support outputs from stochastic TIMES modeling. When running TIMES as a deterministic model, sow = 1.
 
 <img src="images/timesreport_db.png" alt="Figure 1: Illustrating the relational datastructure greated by TIMESreport" width="1500"/>
 
@@ -147,7 +149,7 @@ The TIMESreport workflow integrates seamlessly with your existing TIMES modeling
 
 ### Core Components
 
-1.  [**Sets-DemoModels.xlsx**](#1-sets-demomodelsxlsx) : Sets model-specific user defined commodity and process set definitions used in the TIMESreport]
+1.  [**Sets-DemoModels.xlsx**](#1-sets-demomodelsxlsx) : Sets model-specific user defined commodity and process set definitions used in the TIMESreport\]
 2.  [**SysSettings.xlsx**:](#2-syssettingsxlsx) Used for `~TFM_COMGRP` specification related to commodity sets defined in Sets-DemoModels.xlsx
 3.  [**Scen_Z_TIMESReport.xlsx**:](#3-scen_z_timesreportxlsx) TIMES/VEDA scenario file which 1) automatically runs timesreport.gms, 2) generates commodity and sets definitions and 3) sets TIMES reporting options
 4.  [**timesreport.gms**](#4-timesreportgms): Collect all TIMES model data and writes it into a pivot and database ready format
