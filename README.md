@@ -4,7 +4,7 @@
 
 ## Copyright and License
 
-**Copyright © 2023-2025 Kristoffer S. Andersen**\
+**Copyright © 2023-2026 Kristoffer S. Andersen**\
 Energy Modelling Lab \| [kristoffer\@energymodellinglab.com](mailto:kristoffer@energymodellinglab.com)
 
 **License:** GNU General Public License v3.0
@@ -47,7 +47,7 @@ The tool operates as a post-processing script that runs automatically after TIME
 
 The figure below illustrate the relational format that can be generated based on the tool. The main TIMESreport data is a tidy dataframe consisting of 19 dimensions (the number of dimensions are flexible and can be adjusted to fit the user needs). This main TIMESreport dataframe is augmented by including additional dataframes which includes description for main dimensions in the main TIMESreport dataframe. The labels makes it easy to make elaborate illustration of the data within Excel or any visualization app you may wish to use.
 
-The next step for the reporting tool is to develop a version that supports stochastic modeling within the TIMES modeling framework. To prepare for this development, the dimension "sow" (state-of-world) has recently been added to the main TIMESreport parameter. By including this additional dimension, the visualization app can be prepared to support outputs from stochastic TIMES modeling. When running TIMES as a deterministic model, sow = 1.
+The next step for the reporting tool is to develop a version that supports stochastic modeling within the TIMES modeling framework. To prepare for this development, the dimension "sow" (state-of-world) has recently been added to the main TIMESreport parameter. By including this additional dimension, the visualization app can be prepared to support outputs from stochastic TIMES modeling. The sow dimension also supports parametric scenarios, where the scenario sow dimension is utilized for the parametric scenario number. However, when running TIMES as a single deterministic model, sow = 1.
 
 <img src="images/timesreport_db.png" alt="Figure 1: Illustrating the relational datastructure greated by TIMESreport" width="1500"/>
 
@@ -149,17 +149,17 @@ The TIMESreport workflow integrates seamlessly with your existing TIMES modeling
 
 ### Core Components
 
-1.  [**Sets-DemoModels.xlsx**](#1-sets-demomodelsxlsx) : Sets model-specific user defined commodity and process set definitions used in the TIMESreport\]
+1.  [**Sets-DemoModels.xlsm**](#1-sets-demomodelsxlsx) : Sets model-specific user defined commodity and process set definitions used in the TIMESreport\]
 2.  [**SysSettings.xlsx**:](#2-syssettingsxlsx) Used for `~TFM_COMGRP` specification related to commodity sets defined in Sets-DemoModels.xlsx
 3.  [**Scen_Z_TIMESReport.xlsx**:](#3-scen_z_timesreportxlsx) TIMES/VEDA scenario file which 1) automatically runs timesreport.gms, 2) generates commodity and sets definitions and 3) sets TIMES reporting options
 4.  [**timesreport.gms**](#4-timesreportgms): Collect all TIMES model data and writes it into a pivot and database ready format
 5.  [**Helper functions**](#helper-functions): Helper scripts for capturing scenario descriptions and doing merge gdx and csv-creation
 
-### 1. Sets-DemoModels.xlsx {#1-sets-demomodelsxlsx}
+### 1. Sets-DemoModels.xlsm {#1-sets-demomodelsxlsx}
 
-**Purpose:** Used to define model-specific user defined commodity and process set definitions used in the TIMESreport
+**Purpose:** Used to define model-specific user defined commodity and process set definitions used in the TIMESreport.
 
-**Description:** - Structure of the file - What sets are defined - Naming conventions - How sets map to the model
+**Description:** - Structure of the file - What sets are defined - Naming conventions - How sets map to the model. Includes a VBA script that automatically copies timesreport process and commodity sets definitions to SysSettings.xlsx and Scen_z_TIMESReport.xlsx
 
 <img src="images/Sets-DemoModels_TIMESreport_com.png" alt="Defining commodity sets (comgroup) for use in TIMESreport" width="1500"/>
 
@@ -173,6 +173,10 @@ The TIMESreport workflow integrates seamlessly with your existing TIMES modeling
 
 **Description:** - Role in the workflow - `~TFM_COMGRP` specification - Makes sure your are written into the TIMES output file so that the set definition are available for timesreport.gms - Relationship to other components
 
+**SysSettings.xlsx consists of the one sheet with relevance for TIMESreport: Commodity Group**:
+
+1. **Userinput**: Use VBA-code in Sets-DemoModels.xlsm to copy updated TIMESreport commodity sets from Sets-DemoModels.xlsx to the worksheet "Commodity Group" in SysSetting.xlsx
+
 **Future improvement:** - Perhaps a future version of VEDA could allow for the definition of \~TFM_COMGRP directly inside the Sets-DemoModels.xlsx. If this happens, then this step could be skipped.
 
 <img src="images/syssettings_xlsx.png" alt="SysSettings.xlsx - adding comgrp to TIMES solution output so that the commodity group map is available to timesreport.gms" width="1500"/>
@@ -185,7 +189,7 @@ The TIMESreport workflow integrates seamlessly with your existing TIMES modeling
 
 **Scen_Z_TIMESReport.xlsx consists of the four sheets**:
 
-1.  **Userinput**: Manually copying user defined TIMES report process and commodity sets from Sets-DemoModels.xlsx to Scen_Z_TIMESreport.xlsx
+1.  **Userinput**: Use VBA-code in Sets-DemoModels.xlsm to copy updated TIMES report process and commodity sets from Sets-DemoModels.xlsx to Scen_Z_TIMESreport.xlsx
 
 <img src="images/scen_z_TIMESreport_userinput.png" alt="Scen_Z_TIMESreport.xlsx - Userinput" width="800"/>
 
@@ -201,7 +205,7 @@ The TIMESreport workflow integrates seamlessly with your existing TIMES modeling
 
 <img src="images/scen_z_TIMESreport_runtimesreportgms.png" alt="Scen_Z_TIMESreport.xlsx - RunTIMESReportScript" width="800"/>
 
-**Important Notes:** - Must be synchronized when updating VT-files or SubRES - How it interacts with other components
+**Important Notes:** - Must be synchronized when updating VT-files or SubRES - in order for the VEDA relational database to be updated with the most recent sets. 
 
 ### 4. timesreport.gms {#4-timesreportgms}
 
@@ -227,7 +231,7 @@ TIMESreport comes with two helper functions:
 
 ```         
 YourModelssFolder/
-├── Sets-YourModel.xlsx          # Your existing sets file
+├── Sets-YourModel.xlsm          # Your existing sets file
 ├── SysSettings.xlsx             # Your existing settings file
 ├── SuppXLS/                     # Your existing folder
 │   └── Scen_Z_TIMESReport.xlsx  # <- Add this (Step 2)
@@ -246,7 +250,7 @@ YourModelssFolder/
 
 **Step 3: Define Your Reporting Sets**
 
-1.  Open `Sets-YourModel.xlsx`
+1.  Open `Sets-YourModel.xlsm`
 2.  Define commodity groups (e.g., "Electricity", "Heat", "Transport")
 3.  Define process groups (e.g., "RenewableTech", "FossilTech")
 

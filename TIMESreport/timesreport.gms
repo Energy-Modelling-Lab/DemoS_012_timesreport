@@ -56,7 +56,7 @@ $SETGLOBAL  standalone      "yes"
 $SETGLOBAL  modelname       "DemoS_012"
 
 * Set scenario name of TIMES scenario when script is run locally (the scenario name is defined automatically when runing TIMESreport from VEDA)
-$IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012
+$IF NOT '%TIMESscenario%' $SETGLOBAL TIMESscenario DemoS_012_new
 
 * Set GAMS_wrkTIMES library (Adjust to adhere to local TIMES/VEDA installation) 
 $SETGLOBAL GAMS_wrkTIMES "c:\VEDA\GAMS_WrkTIMES"
@@ -150,13 +150,13 @@ elapsedTIME("ante","01setTIMESreport") = TIMEelapsed;
 *============================================================================================
 * We add information on scenario description to a scalar to store it in the GDX file (this should be improved on way or the other)
 ** First information on scenario name and model description is taken from vtrun file
-$call grep "Title" "%pathGAMS_WrkTIMES_Model%\vtrun.cmd" >  %pathTIMESmodel%\TIMESreport\tempData\title.txt"
+$call grep "Title" "%pathGAMS_WrkTIMES_Model%\vtrun.cmd" >  "%pathGAMS_WrkTIMES_Model%\title.txt"
 
 ** Second we run a bat file which dynamically generates a gms files
-$call  '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat';
+$call '%pathTIMESmodel%TIMESreport\bat-scripts\create_scen_desc_gms.bat "%pathGAMS_WrkTIMES_Model%"'
 
 ** Third include the gams files which defines the scalar
-$include '%pathTIMESmodel%TIMESreport\tempData\create_scen_desc_set.gms';
+$include '%pathGAMS_WrkTIMES_Model%\create_scen_desc_set.gms';
 
 *Get information form lst file on model statistics and solve summary
 $call grep  "MODEL STATISTICS" -H -A 36 "%pathGAMS_WrkTIMES_Model%\%TIMESscenario%.lst"             > "%pathTIMESmodel%\TIMESreport\SolverStats\%TIMESscenario%_solver_statistics.txt"
@@ -167,7 +167,6 @@ SET modelname(scen,timesmodel)   "Name of TIMES model";
 
 * Set TIMES modelname parameter to be equal to current scen and timesmodelname
 modelname(scen,timesmodel) = YES;
-
 
 *============================================================================================
 * 3 Declare TIMES default sets, parameters, variables and equations
@@ -1001,7 +1000,7 @@ LOOP(sector$ReportInclude(sector),
 
 *       Decomission costs 
         TIMESReport(scen,sector,"acosts","decc" ,tmp_prc,"NA","annual",tmp_reg,tmp_reg,milestonyr,vntg,"NA",cur)$(prc_desc(tmp_reg,tmp_prc)
-                                                                                                                  and cst_invx(tmp_reg,vntg,milestonyr,tmp_prc,"INV") lt 0)
+                                                                                                                  and cst_decc(tmp_reg,vntg,milestonyr,tmp_prc))
         = cst_decc(tmp_reg,vntg,milestonyr,tmp_prc)$(
          g_rcur(tmp_reg,cur));
 

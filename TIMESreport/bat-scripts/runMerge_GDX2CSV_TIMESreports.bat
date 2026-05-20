@@ -21,7 +21,7 @@ gdxdump   %filepath%..\GDX\compare_timesreport.gdx format=csv symb=attr_desc    
 gdxdump   %filepath%..\GDX\compare_timesreport.gdx format=csv symb=topic_desc      output=%filepath%..\compare_topic_desc.csv     CSVSetText  noHeader header=filename,topic,topic_desc
 
 
-del %filepath%..\GDX\compare_timesreport.gdx
+::del %filepath%..\GDX\compare_timesreport.gdx
 
 ::echo Closed >RunTerminated
 
