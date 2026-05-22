@@ -40,10 +40,10 @@ if(!require("dplyr")) {
     install.packages('dplyr', repos="https://cran.rstudio.com/")
 }
 if(!require("DBI")) {
-    install.packages('jsonlite', repos="https://cran.rstudio.com/")
+    install.packages('DBI', repos="https://cran.rstudio.com/")
 }
 if(!require("duckdb")) {
-    install.packages('readr', repos="https://cran.rstudio.com/")
+    install.packages('duckdb', repos="https://cran.rstudio.com/")
 }
 if(!require("this.path")) {
     install.packages('this.path', repos="https://cran.rstudio.com/")
@@ -79,7 +79,7 @@ if (!dir.exists(db_folder)) {
 
 ## By default we want to create a duckdb from all existing timesreport files in
 ## GDX library
-gdx_files <- list.files(paste0(setwd,"/GDX/"),pattern=".gdx$")
+gdx_files <- list.files(paste0(setwd,"/GDX/"),pattern=".gdx$", full.names = TRUE)
 
 #==============================================================================
 # HELPER FUNCTIONS
@@ -478,7 +478,7 @@ test_database <- function(gdx_files, db_path = NULL) {
 
     tryCatch({
         message("Creating new database...")
-        con <- load_gdx_files(paste0("GDX/",gdx_files), db_path)
+        con <- load_gdx_files(gdx_files, db_path)
 
         # Test queries
         message("\nTesting database contents:")
@@ -608,3 +608,4 @@ for (i in seq_along(gdx_files)) {
 
 # Execute the test function with the configured database path
 test_database(gdx_files, db_path)
+
